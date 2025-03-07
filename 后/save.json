@@ -1,0 +1,86 @@
+{
+    "admin23": {
+        "data": [
+            {
+                "answerRecords": [
+                    "B.壁橱",
+                    ""
+                ],
+                "answerResults": [
+                    true,
+                    false
+                ],
+                "score": 10,
+                "date": "2025/03/07"
+            },
+            {
+                "answerRecords": [
+                    "C.窗户",
+                    "不知道"
+                ],
+                "answerResults": [
+                    false,
+                    true
+                ],
+                "score": 10,
+                "date": "2025/03/07"
+            }
+        ]
+    },
+    "admin": {
+        "data": [
+            {
+                "answerRecords": [
+                    "A.地板",
+                    "不知道"
+                ],
+                "answerResults": [
+                    false,
+                    true
+                ],
+                "score": 10,
+                "date": "2025/03/07"
+            }
+        ]
+    },
+    "7": {
+        "data": [
+            {
+                "answerRecords": [
+                    "A.地板",
+                    "5"
+                ],
+                "answerResults": [
+                    false,
+                    false
+                ],
+                "score": 0,
+                "date": "2025/03/07"
+            },
+            {
+                "answerRecords": [
+                    "B.壁橱",
+                    "不知道"
+                ],
+                "answerResults": [
+                    true,
+                    true
+                ],
+                "score": 20,
+                "date": "2025/03/07"
+            },
+            {
+                "answerRecords": [
+                    "B.壁橱",
+                    "5"
+                ],
+                "answerResults": [
+                    true,
+                    false
+                ],
+                "score": 10,
+                "date": "2025/03/07"
+            }
+        ]
+    }
+}

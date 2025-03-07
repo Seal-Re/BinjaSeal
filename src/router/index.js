@@ -1,43 +1,65 @@
-import { createRouter, createWebHashHistory } from 'vue-router';
+import { createRouter, createWebHistory } from 'vue-router';
+import { useUserStore } from '@/stores/userStore';
 
-const routes = [
-    {
-        path: '/login',
-        name: 'Login',
-        component: () => import('../views/Login/index.vue'),
-        meta: {
-            title: '登入',
-            layout: false,
-        },
-    },
-    {
-      path: '/',
-      name: 'Home',
-      component: () => import('../views/Home/index.vue'),
-      meta: {
-        title: '首页',
-        layout: true,
-      }
-    }
-];
 
 const router = createRouter({
-    history: createWebHashHistory(),
-    routes: routes,
-});
+    history: createWebHistory(import.meta.env.BASE_URL),
+    routes: [
+      {
+        path:'/',
+        redirect:() =>{
+          const isLoggedIn =useUserStore().loginStatus
+          return isLoggedIn ? '/home':'/login'
+        },
+      },
+      {
+        path:'/login',
+        name:'Login',
+        component: () => import('@/views/Login/AppIndex.vue'),
+      },
+      {
+        path: '/home',
+        name: 'Home',
+        component: () => import('@/views/Home/AppIndex.vue'),
+      },
+      {
+        path: '/evaluate',
+        name: 'Evaluate',
+        component: () => import('@/views/Evaluate/AppIndex.vue'),
+      },
+      {
+        path: '/train',
+        name: 'Train',
+        component: () => import('@/views/Train/AppIndex.vue'),
+      },
+      {
+        path: '/exchange',
+        name: 'Exchange',
+        component: () => import('@/views/Exchange/AppIndex.vue'),
+      },
+      {
+        path: '/register',
+        name: 'Register',
+        component: () => import('@/views/Register/AppIndex.vue'),
+      },
+    ]
+  });
 
-router.beforeEach((to, from, next) => {
-  // 白名单路径
-  /*const allowList = ['/login', '/404'];*/
-  next('/login');
-  /*
-  if (to.meta.requiresAuth && !localStorage.getItem('token')) {
-    if (!allowList.includes(to.path)) {
-      next('/login')
+  router.beforeEach((to, from, next) => {
+    const userStore = useUserStore();
+    const isLoggedIn = userStore.loginStatus;
+
+    if (to.name === 'Login' && isLoggedIn) {
+        // 如果已经登录，访问登录页则重定向到主页
+        next('/home');
     }
-  } else {
-    next()
-  }*/
-})
+    else if (!isLoggedIn && (to.name!== 'Login' && to.name!== 'Register') ) {
+        // 如果未登录，且访问的不是登录页，则重定向到登录页
+        next('/login');
+    } else {
+        // 其他情况正常放行
+        next();
+    }
+});
 
 export default router;
