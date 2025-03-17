@@ -1,30 +1,15 @@
 <template>
-  <!-- 模板代码保持不变 -->
-  <div class="home-page">
-    <!-- 顶部白条区域 -->
-    <div class="top-white-bar">
-      <!-- 修改后的头部容器 -->
-      <div class="header-content">
-        <!-- 添加图标 -->
-        <div class="title-container">
-          <img src="@/assets/rzkh.svg" alt="图标" class="title-icon">
-          <div class="title">脑卒中患者训练平台</div>
-        </div>
-        <div class="user-info-container">
-          <div class="user-info">当前登录用户：{{ user }}</div>
-          <el-button type="primary" @click="logout">登出</el-button>
-        </div>
-      </div>
-    </div>
+  <!-- 移除顶部白条区域 -->
+  <!-- 新增的背景空白区域 -->
+  <div class="summary-top-space"></div>
 
-    <!-- 新增的背景空白区域 -->
-    <div class="summary-top-space"></div>
-
-    <!-- 患者情况概况区域 -->
-    <el-card class="patient-summary">
-      <template #header>
-        <div class="header-flex">
-          <h2>患者情况概况：</h2>
+  <!-- 患者情况概况区域 -->
+  <el-card class="patient-summary">
+    <template #header>
+      <div class="header-flex">
+        <h2 class="patieny-summary-title">患者情况概况：</h2>
+        <!-- 新增一个容器包裹日期选择框 -->
+        <div class="date-picker-wrapper">
           <el-date-picker
             v-model="selectedDate"
             type="date"
@@ -32,41 +17,39 @@
             @change="filterTableData"
           ></el-date-picker>
         </div>
-      </template>
-      <!-- 折线图和饼状图容器 -->
-      <div class="chart-container">
-        <div ref="lineChartRef" class="line-chart"></div>
-        <div ref="pieChartRef" class="pie-chart"></div>
       </div>
-      <!-- 表格部分 -->
-      <el-table :data="filteredTableData" stripe>
-        <el-table-column prop="date" label="时间"></el-table-column>
-        <el-table-column prop="id" label="id"></el-table-column>
-        <el-table-column prop="失算症训练" label="失算症训练"></el-table-column>
-        <el-table-column prop="思维障碍训练" label="思维障碍训练"></el-table-column>
-        <el-table-column prop="注意障碍训练" label="注意障碍训练"></el-table-column>
-        <el-table-column prop="知觉障碍训练" label="知觉障碍训练"></el-table-column>
-        <el-table-column prop="记忆障碍训练" label="记忆障碍训练"></el-table-column>
-        <el-table-column prop="totalScore" label="总分"></el-table-column>
+    </template>
+    <!-- 折线图和饼状图容器 -->
+    <div class="chart-container">
+      <div ref="lineChartRef" class="line-chart"></div>
+      <div ref="pieChartRef" class="pie-chart"></div>
+    </div>
+    <!-- 表格部分 -->
+    <div class="table-data">
+      <el-table :data="currentPageData" stripe class="table-with-shadow" style="text-align: center; width: 100%;">
+        <el-table-column prop="date" label="时间" align="center" min-width="120px"></el-table-column>
+        <!-- 修改为显示认知功能情况 -->
+        <el-table-column prop="认知功能" label="认知功能情况" align="center" min-width="100px"></el-table-column>
+        <el-table-column prop="失算症训练" label="失算症训练" align="center" min-width="100px"></el-table-column>
+        <el-table-column prop="思维障碍训练" label="思维障碍训练" align="center" min-width="100px"></el-table-column>
+        <el-table-column prop="注意障碍训练" label="注意障碍训练" align="center" min-width="100px"></el-table-column>
+        <el-table-column prop="知觉障碍训练" label="知觉障碍训练" align="center" min-width="100px"></el-table-column>
+        <el-table-column prop="记忆障碍训练" label="记忆障碍训练" align="center" min-width="100px"></el-table-column>
+        <el-table-column prop="totalScore" label="总分" align="center" min-width="80px"></el-table-column>
       </el-table>
-    </el-card>
+    </div>
 
-    <!-- 新增的透明块 -->
-    <div class="separate-space"></div>
-
-    <!-- 评估和训练按钮区域 -->
-    <el-row :gutter="20" class="action-buttons">
-      <el-col :span="12">
-        <el-button type="primary" class="btn" style="height: 100px; font-size: 28px;" @click="handleEvaluate">评估</el-button>
-      </el-col>
-      <el-col :span="12">
-        <el-button type="primary" class="btn" style="height: 100px; font-size: 28px;" @click="handleTrain">训练</el-button>
-      </el-col>
-    </el-row>
-
-    <!-- 底部白条区域 -->
-    <div class="bottom-white-bar"></div>
-  </div>
+    <!-- 新增分页组件的父容器 -->
+    <div class="pagination-container">
+      <el-pagination
+        @current-change="handleCurrentChange"
+        :current-page="currentPage"
+        :page-size="pageSize"
+        layout="prev, pager, next"
+        :total="filteredTableData.length"
+      />
+    </div>
+  </el-card>
 </template>
 
 <script setup>
@@ -86,6 +69,10 @@ const tableData = ref([]);
 const selectedDate = ref(null);
 const lineChartRef = ref(null);
 const pieChartRef = ref(null);
+
+// 分页相关变量
+const currentPage = ref(1);
+const pageSize = ref(5);
 
 // 定义一个函数将日期格式从 2025/3/1 转换为 2025 - 03 - 01
 const convertDate = (dateStr) => {
@@ -108,31 +95,27 @@ const filteredTableData = computed(() => {
   });
 });
 
+// 计算当前页的数据
+const currentPageData = computed(() => {
+  const startIndex = (currentPage.value - 1) * pageSize.value;
+  const endIndex = startIndex + pageSize.value;
+  return filteredTableData.value.slice(startIndex, endIndex);
+});
+
 const logout = () => {
   console.log('用户登出');
   userStore.logout();
   router.push('/login');
 };
 
-// 点击评估按钮的处理方法
-const handleEvaluate = () => {
-  console.log('点击了评估按钮');
-  router.push('/evaluate');
-};
-
-// 点击训练按钮的处理方法
-const handleTrain = () => {
-  console.log('点击了训练按钮');
-  router.push('/train');
-};
-
 const filterTableData = () => {
   // 日期选择改变时，会自动触发 filteredTableData 的计算属性更新
-  drawCharts();
+  drawPieChart();
+  currentPage.value = 1; // 切换日期后重置到第一页
 };
 
-const drawCharts = () => {
-  const dataToUse = selectedDate.value? filteredTableData.value : tableData.value; // 根据是否选择日期决定使用的数据
+const drawLineChart = () => {
+  const dataToUse = tableData.value; // 始终使用全部数据绘制折线图
   const dateMap = new Map();
   const moduleScores = {
     '失算症训练': [],
@@ -141,14 +124,6 @@ const drawCharts = () => {
     '知觉障碍训练': [],
     '记忆障碍训练': [],
     'totalScore': []
-  };
-  const moduleTotalScores = {
-    '失算症训练': 0,
-    '思维障碍训练': 0,
-    '注意障碍训练': 0,
-    '知觉障碍训练': 0,
-    '记忆障碍训练': 0,
-    'totalScore': 0
   };
 
   dataToUse.forEach(item => {
@@ -165,7 +140,6 @@ const drawCharts = () => {
     }
     Object.keys(moduleScores).forEach(module => {
       dateMap.get(date)[module].push(item[module]);
-      moduleTotalScores[module] += item[module];
     });
   });
 
@@ -209,6 +183,24 @@ const drawCharts = () => {
     }))
   };
   lineChart.setOption(lineOption);
+};
+
+const drawPieChart = () => {
+  const dataToUse = selectedDate.value? filteredTableData.value : tableData.value; // 根据是否选择日期决定使用的数据
+  const moduleTotalScores = {
+    '失算症训练': 0,
+    '思维障碍训练': 0,
+    '注意障碍训练': 0,
+    '知觉障碍训练': 0,
+    '记忆障碍训练': 0,
+    'totalScore': 0
+  };
+
+  dataToUse.forEach(item => {
+    Object.keys(moduleTotalScores).forEach(module => {
+      moduleTotalScores[module] += item[module];
+    });
+  });
 
   // 绘制饼状图
   const pieChart = echarts.init(pieChartRef.value);
@@ -232,6 +224,10 @@ const drawCharts = () => {
   pieChart.setOption(pieOption);
 };
 
+const handleCurrentChange = (page) => {
+  currentPage.value = page;
+};
+
 onMounted(async () => {
   try {
     const response = await axios.get(baseurl+`/api/deliverScoreData?username=${user.value}`);
@@ -243,21 +239,22 @@ onMounted(async () => {
     // 遍历所有训练类型
     for (const trainingType in data) {
       // 遍历每个训练类型的数据项
-      for (const item of data[trainingType]) { // 注意这里不需要再访问.data
-        // 创建唯一标识键（日期 + id）
+      for (const item of data[trainingType]) {
         const key = `${item.date}-${item.id}`;
 
         // 如果不存在则初始化记录
         if (!recordsMap.has(key)) {
           recordsMap.set(key, {
             date: item.date,
-            id: item.id,
+            // 移除 id
             失算症训练: 0,
             思维障碍训练: 0,
             注意障碍训练: 0,
             知觉障碍训练: 0,
             记忆障碍训练: 0,
-            totalScore: 0
+            totalScore: 0,
+            // 添加认知功能
+            认知功能: item['认知功能']
           });
         }
 
@@ -277,68 +274,37 @@ onMounted(async () => {
     const allRows = Array.from(recordsMap.values()).sort((a, b) => {
       const dateA = new Date(convertDate(a.date));
       const dateB = new Date(convertDate(b.date));
-      return dateB - dateA || b.id - a.id;
+      return dateB - dateA || (a['认知功能'] > b['认知功能']? 1 : -1);
     });
 
     tableData.value = allRows;
 
-
-
-    drawCharts(); // 初始加载时绘制图表
+    drawLineChart(); // 初始加载时绘制折线图
+    drawPieChart(); // 初始加载时绘制饼状图
   } catch (error) {
     console.error('获取数据失败:', error);
   }
 });
 
 watch(selectedDate, () => {
-  drawCharts();
+  drawPieChart();
 });
 </script>
 
 <style scoped>
-/* 样式代码保持不变 */
+/* 样式代码修改 */
 .home-page {
   padding: 0 20px;
   position: relative;
   overflow-x: hidden;
 }
 
-.top-white-bar {
-  background-color: white;
-  padding: 20px 0;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-}
-
-.header-content {
-  max-width: 100%; /* 修改为100%以占满宽度 */
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 20px; /* 设置与边缘的间隔 */
-  box-sizing: border-box; /* 确保内边距包含在宽度内 */
-}
-
-.title-container {
-  display: flex;
-  align-items: center;
-}
-
-.title-icon {
-  width: 30px;
-  height: 30px;
-  margin-right: 10px;
-}
-
+/* 移除顶部白条区域样式 */
 .summary-top-space {
   height: 10px;
   background-color: transparent;
-  margin-top: 80px;
+  /* 修改顶部外边距 */
+  margin-top: 20px;
 }
 
 .bottom-white-bar {
@@ -351,37 +317,11 @@ watch(selectedDate, () => {
   z-index: 100;
 }
 
-.header-container {
-  margin-bottom: 0;
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.title {
-  font-size: 24px;
-  font-weight: bold;
-}
-
-.user-info-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.user-info {
-  font-size: 16px;
-}
-
 .patient-summary {
-  margin-top: 5px;
-  margin-bottom: 5px;
+  margin-top: 0.35%;
+  margin-bottom: 2%;
+  margin-left: 2.25%;
+  margin-right: 2%;
   position: relative;
   z-index: 1;
 }
@@ -407,16 +347,6 @@ watch(selectedDate, () => {
   font-weight: bold;
 }
 
-.action-buttons {
-  display: flex;
-  justify-content: space-around;
-  margin-bottom: 80px;
-}
-
-.btn {
-  width: 100%;
-}
-
 .training-container {
   display: flex;
   gap: 15px;
@@ -436,37 +366,30 @@ watch(selectedDate, () => {
 
 /* 响应式调整 */
 @media (max-width: 1200px) {
- .training-item {
+  .training-item {
     min-width: calc(25% - 12px);
   }
 }
 
 @media (max-width: 992px) {
- .training-item {
+  .training-item {
     min-width: calc(33.33% - 12px);
   }
 }
 
 @media (max-width: 768px) {
- .training-item {
+  .training-item {
     min-width: calc(50% - 12px);
   }
 }
 
 @media (max-width: 480px) {
- .training-item {
+  .training-item {
     min-width: 100%;
   }
-}
-
-@media screen and (max-width: 768px) {
- .header-content {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
- .user-info-container {
-    margin-top: 10px;
+  /* 在小屏幕下，让表格可以横向滚动 */
+  .table-data {
+    overflow-x: auto;
   }
 }
 
@@ -474,6 +397,7 @@ watch(selectedDate, () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  height:20pt;
 }
 
 /* 新增图表容器样式 */
@@ -491,5 +415,28 @@ watch(selectedDate, () => {
 .pie-chart {
   width: 35%;
   height: 300px;
+}
+
+/* 为日期选择框容器添加右侧外边距 */
+.date-picker-wrapper {
+  margin-right: 10%; /* 可根据需要调整间隔大小 */
+}
+
+.table-with-shadow {
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  min-width: 800px; /* 设置表格最小宽度 */
+}
+
+.patieny-summary-title {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+/* 新增分页组件父容器的样式 */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
 }
 </style>

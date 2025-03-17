@@ -16,21 +16,38 @@ const router = createRouter({
         path:'/login',
         name:'Login',
         component: () => import('@/views/Login/AppIndex.vue'),
+        meta: {
+          title: '登陆',
+          layout: false,
+      },
       },
       {
         path: '/home',
         name: 'Home',
         component: () => import('@/views/Home/AppIndex.vue'),
+        meta: {
+          title: '首页',
+          layout: true,
+          icon: 'HomeFilled',
+      },
       },
       {
         path: '/evaluate',
         name: 'Evaluate',
         component: () => import('@/views/Evaluate/AppIndex.vue'),
+        meta: {
+          title: '评估',
+          layout: true,
+      },
       },
       {
         path: '/train',
         name: 'Train',
         component: () => import('@/views/Train/AppIndex.vue'),
+        meta: {
+          title: '训练',
+          layout: true,
+      },
       },
     ]
   });

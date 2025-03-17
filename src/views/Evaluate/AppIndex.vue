@@ -2,108 +2,110 @@
   <!-- 模板代码保持不变 -->
   <div v-if="Flag === 0">
     <div class="page-container">
-      <!-- 头部固定区域 -->
-      <div class="fixed-header">
-        <div class="header-content">
-          <div class="title">评估</div>
-          <div class="user-info">当前登录用户：{{ user }}</div>
-        </div>
-      </div>
-
-      <!-- 主要内容 -->
-      <div class="main-content-container">
-        <el-row class="main-content" :gutter="20">
-          <!-- 题目容器 -->
-          <el-col :span="18">
-            <el-card v-if="questionList.length > 0" class="question-box">
-              <template #header>
-                <h3>{{ currentQuestion.question }}</h3>
-              </template>
-              <!-- 根据 model 参数判断渲染选择题还是填空题 -->
-              <template v-if="currentQuestion.model === '0'">
-                <el-radio-group v-model="selectedOption" class="custom-radio-group">
-                  <el-radio
-                    v-for="(option, index) in currentQuestion.options"
-                    :key="index"
-                    :label="option"
-                    class="custom-radio"
-                  >
-                    {{ option }}
-                  </el-radio>
-                </el-radio-group>
-              </template>
-              <template v-else-if="currentQuestion.model === '1'">
-                <el-input v-model="selectedOption" placeholder="请输入答案"></el-input>
-              </template>
-              <!-- 新增图片选择题 -->
-              <template v-else-if="currentQuestion.model === '2'">
-                <el-radio-group v-model="selectedOption" class="image-radio-group">
-                  <el-row :gutter="20" class="image-options-container">
-                    <el-col
+      <!-- 新增用户评估区域 -->
+      <el-card class="patient-summary">
+        <template #header>
+          <div class="header-flex">
+            <h2 class="patieny-summary-title">用户评估：</h2>
+          </div>
+        </template>
+        <!-- 主要内容 -->
+        <div class="main-content-container">
+          <el-row class="main-content" :gutter="20">
+            <!-- 题目容器 -->
+            <el-col :span="18">
+              <el-card v-if="questionList.length > 0" class="question-box">
+                <template #header>
+                  <h3 class="question-text">{{ currentQuestion.question }}</h3>
+                </template>
+                <!-- 根据 model 参数判断渲染选择题还是填空题 -->
+                <template v-if="currentQuestion.model === '0'">
+                  <el-radio-group v-model="selectedOption" class="custom-radio-group">
+                    <el-radio
                       v-for="(option, index) in currentQuestion.options"
                       :key="index"
-                      :span="12"
-                      class="image-option-col"
+                      :label="option"
+                      class="custom-radio"
                     >
-                      <el-radio :label="option" class="image-radio-item">
-                        <div class="image-wrapper">
-                          <img
-                            :src="baseurl+`/images_data/?name=${option}`"
-                            alt="选项图片"
-                            class="option-image"
-                          >
-                        </div>
-                      </el-radio>
-                    </el-col>
-                  </el-row>
-                </el-radio-group>
-              </template>
-            </el-card>
-            <div v-else v-show="!isLoading">加载中...</div>
-          </el-col>
-          <!-- 侧边栏 -->
-          <el-col :span="6">
-            <el-card v-if="questionList.length > 0" class="side-bar">
-              <!-- 题目列表 -->
-              <template #header>
-                <h3>题目列表</h3>
-              </template>
-              <div class="question-list">
-                <div
-                  v-for="(item, index) in questionList"
-                  :key="index"
-                  class="question-number"
-                  :class="{
-                    'correct-answer': answerResults[index] === true,
-                    'wrong-answer': answerResults[index] === false
-                  }"
-                >
-                  {{ index + 1 }}
+                      {{ option }}
+                    </el-radio>
+                  </el-radio-group>
+                </template>
+                <template v-else-if="currentQuestion.model === '1'">
+                  <el-input v-model="selectedOption" placeholder="请输入答案"></el-input>
+                </template>
+                <!-- 新增图片选择题 -->
+                <template v-else-if="currentQuestion.model === '2'">
+                  <el-radio-group v-model="selectedOption" class="image-radio-group">
+                    <el-row :gutter="20" class="image-options-container">
+                      <el-col
+                        v-for="(option, index) in currentQuestion.options"
+                        :key="index"
+                        :span="12"
+                        class="image-option-col"
+                      >
+                        <el-radio :label="option" class="image-radio-item">
+                          <div class="image-wrapper">
+                            <img
+                              :src="baseurl+`/images_data/?name=${option}`"
+                              alt="选项图片"
+                              class="option-image"
+                            >
+                          </div>
+                        </el-radio>
+                      </el-col>
+                    </el-row>
+                  </el-radio-group>
+                </template>
+              </el-card>
+              <div v-else v-show="!isLoading">加载中...</div>
+            </el-col>
+            <!-- 侧边栏 -->
+            <el-col :span="6">
+              <el-card v-if="questionList.length > 0" class="side-bar">
+                <!-- 题目列表 -->
+                <template #header>
+                  <div class="header-list">
+                    <h3>题目列表</h3>
+                  </div>
+                </template>
+                <div class="question-list">
+                  <div
+                    v-for="(item, index) in questionList"
+                    :key="index"
+                    class="question-number"
+                    :class="{
+                      'correct-answer': answerResults[index] === true,
+                      'wrong-answer': answerResults[index] === false
+                    }"
+                  >
+                    {{ index + 1 }}
+                  </div>
                 </div>
-              </div>
-              <!-- 答题信息 -->
-              <div class="answer-info">
-                <p>答题时间：{{ getFormattedTime() }}</p>
-                <p>当前得分：{{ score }}</p>
-              </div>
-            </el-card>
-            <div v-else v-show="!isLoading">加载中...</div>
-            <!-- 按钮容器，移到侧边栏卡片外部 -->
-            <el-row v-if="questionList.length > 0" class="button-container" justify="center">
-              <el-col>
-                <el-button
-                  type="primary"
-                  :disabled="false"
-                  @click="currentIndex === questionList.length - 1? submitAnswers() : nextQuestion()"
-                  class="big-button"
-                >
-                  {{ currentIndex === questionList.length - 1? '提交' : '下一题' }}
-                </el-button>
-              </el-col>
-            </el-row>
-          </el-col>
-        </el-row>
-      </div>
+                <!-- 答题信息 -->
+                <div class="answer-info">
+                  <p>答题时间：{{ getFormattedTime() }}</p>
+                  <p>当前得分：{{ score }}</p>
+                </div>
+              </el-card>
+              <div v-else v-show="!isLoading">加载中...</div>
+              <!-- 按钮容器，移到侧边栏卡片外部 -->
+              <el-row v-if="questionList.length > 0" class="button-container" justify="center">
+                <el-col>
+                  <el-button
+                    type="primary"
+                    :disabled="false"
+                    @click="currentIndex === questionList.length - 1? submitAnswers() : nextQuestion()"
+                    class="big-button"
+                  >
+                    {{ currentIndex === questionList.length - 1? '提交' : '下一题' }}
+                  </el-button>
+                </el-col>
+              </el-row>
+            </el-col>
+          </el-row>
+        </div>
+      </el-card>
 
       <!-- 尾部固定区域 -->
       <div class="fixed-footer"></div>
@@ -111,16 +113,6 @@
   </div>
   <div v-else>
     <div class="page-container result-page">
-      <!-- 头部固定区域，显示评估结果标题和用户信息 -->
-      <div class="fixed-header">
-        <div class="header-content">
-          <div class="title">评估结果</div>
-          <div class="user-info">
-            <span>当前登录用户：</span>{{ user }}
-          </div>
-        </div>
-      </div>
-
       <!-- 主要内容区域，显示得分和操作按钮 -->
       <div class="main-content-container result-main-content">
         <div class="result-box">
@@ -314,93 +306,48 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* 去除滚动条 */
 html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  overflow: hidden; /* 禁用滚动条 */
 }
 
 .page-container {
   display: flex;
   flex-direction: column;
   height: 95vh; /* 使用视口高度 */
-  width: 95vw; /* 使用视口宽度 */
-  overflow: hidden; /* 防止内容溢出 */
-}
-
-.fixed-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 80px; /* 头部高度 */
-  background-color: #f9f9f9;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  z-index: 100;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-}
-
-.header-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 0 30px;
-}
-
-.title {
-  font-size: 28px;
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.user-info {
-  font-size: 16px;
-  color: #666;
-}
-
-
-.evaluation-container {
-  padding: 20px;
-  margin: 20px;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  width: 100%; /* 修改为 100%，确保不溢出 */
+  overflow-x: hidden; /* 防止水平溢出 */
 }
 
 .main-content {
-  margin-bottom: 20px;
   width: 100%;
-  max-width: 1200px; /* 可根据需要调整最大宽度 */
+  max-width: 100%;
 }
 
 .main-content-container {
   flex: 1;
-  padding: 100px 20px 80px; /* 增加底部padding */
-  margin-right: 20px;
+  padding: 30px 20px 80px; /* 减少顶部 padding，增加底部 padding */
+  margin-right: 0; /* 修改为 0，避免额外的右边距 */
   display: flex;
   justify-content: center;
   align-items: flex-start; /* 顶部对齐 */
-  overflow: hidden; /* 防止内容溢出 */
+  overflow-x: hidden; /* 防止水平溢出 */
 }
 
 .question-box {
-  min-height: 300px; /* 保证最小高度 */
+  height: 100%;
   width: 100%;
-  max-width: 1200px; /* 限制最大宽度 */
-  margin: 0 auto; /* 居中 */
+  max-width: 100%;
   padding: 20px;
   box-sizing: border-box;
+  margin-left: 0;
 }
 
 .side-bar {
   border-radius: 8px;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
   padding: 20px;
-  margin-bottom: 20px; /* 为按钮留出空隙 */
+  margin-bottom: 20px;
   box-sizing: border-box;
 }
 
@@ -509,19 +456,25 @@ html, body {
 /* 页面二样式 */
 .result-page {
   background-color: transparent; /* 修改为透明背景 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .result-main-content {
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 100%;
+  height: 100%;
+  margin-right: 0; /* 修改为 0，避免额外的右边距 */
 }
 
 .result-box {
   background-color: #fff;
   border: none;
   border-radius: 12px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
   padding: 60px 40px;
   text-align: center;
   box-sizing: border-box;
@@ -533,6 +486,7 @@ html, body {
   color: #3498db;
   margin-bottom: 40px;
 }
+
 .result-button {
   display: flex;
   align-items: center;
@@ -551,11 +505,11 @@ html, body {
 
 /* 图片选择题布局修复 */
 .image-radio-group {
-  width: 60%;
+  width: 100%; /* 修改为 100%，确保自适应 */
   display: flex;
   flex-direction: column;
   align-items: center; /* 居中显示 */
-  gap: 16px; /* 图片之间的间距 */
+  gap: 5px; /* 图片之间的间距 */
 }
 
 .image-options-container {
@@ -563,7 +517,7 @@ html, body {
   flex-wrap: wrap;
   justify-content: center; /* 居中显示 */
   gap: 16px; /* 图片之间的间距 */
-  max-width: 800px; /* 限制最大宽度，避免图片过大 */
+  max-width: 100%; /* 修改为 100%，确保自适应 */
   margin: 0 auto; /* 居中 */
 }
 
@@ -575,11 +529,11 @@ html, body {
 
 .image-radio-item {
   width: 100%;
-  height: 100%;
+  height: 90%;
 }
 
 .image-wrapper {
-  width: 100%;
+  width: 45%;
   aspect-ratio: 1 / 1; /* 保持1:1宽高比 */
   display: flex;
   align-items: center;
@@ -592,25 +546,70 @@ html, body {
 
 .option-image {
   max-width: 90%; /* 限制最大宽度 */
-  max-height: 90%; /* 限制最大高度 */
+  max-height: 60%; /* 限制最大高度 */
   object-fit: contain; /* 保持图片比例 */
   transition: transform 0.3s;
 }
 
 .image-radio-item.is-checked .image-wrapper {
   border-color: #409eff;
-  box-shadow: 0 0 5px rgba(64, 158, 255, 0.3);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
 }
 
 /* 修复Element Plus radio样式覆盖 */
 :deep(.el-radio__input) {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 40%;
+  left: 1%;
 }
 
 :deep(.el-radio__label) {
   width: 100%;
-  padding: 0 !important;
+  padding: 5 !important;
+}
+
+/* 患者情况概况和用户评估区域样式 */
+.patient-summary {
+  margin-top: 2.7%;
+  margin-bottom: 6.75%;
+  margin-left: 2.3%;
+  margin-right: 2%; /* 修改为 2%，避免过大的右边距 */
+  position: relative;
+  z-index: 1;
+}
+
+.header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 20pt;
+}
+
+.header-list {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 20pt;
+}
+
+.patieny-summary-title {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.question-text {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .main-content-container {
+    flex-direction: column;
+  }
+  .el-col {
+    width: 100%;
+  }
 }
 </style>
