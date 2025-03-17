@@ -478,6 +478,7 @@ html, body {
   padding: 60px 40px;
   text-align: center;
   box-sizing: border-box;
+  margin-right:24%;
 }
 
 .score-text {
