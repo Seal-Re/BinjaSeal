@@ -1,20 +1,18 @@
 <template>
   <!-- 模板代码保持不变 -->
+  <div class="summary-top-space"></div>
   <div v-if="Flag === 0">
     <div class="page-container">
       <!-- 新增用户评估区域 -->
-      <el-card class="patient-summary">
-        <template #header>
           <div class="header-flex">
-            <h2 class="patieny-summary-title">用户评估：</h2>
+            <h2 class="patieny-summary-title">认知评估测试：</h2>
           </div>
-        </template>
         <!-- 主要内容 -->
         <div class="main-content-container">
           <el-row class="main-content" :gutter="20">
             <!-- 题目容器 -->
             <el-col :span="18">
-              <el-card v-if="questionList.length > 0" class="question-box">
+              <el-card v-if="currentPageQuestionList.length > 0" class="question-box">
                 <template #header>
                   <h3 class="question-text">{{ currentQuestion.question }}</h3>
                 </template>
@@ -62,7 +60,7 @@
             </el-col>
             <!-- 侧边栏 -->
             <el-col :span="6">
-              <el-card v-if="questionList.length > 0" class="side-bar">
+              <el-card v-if="currentPageQuestionList.length > 0" class="side-bar">
                 <!-- 题目列表 -->
                 <template #header>
                   <div class="header-list">
@@ -71,15 +69,15 @@
                 </template>
                 <div class="question-list">
                   <div
-                    v-for="(item, index) in questionList"
+                    v-for="(item, index) in currentPageQuestionList"
                     :key="index"
                     class="question-number"
                     :class="{
-                      'correct-answer': answerResults[index] === true,
-                      'wrong-answer': answerResults[index] === false
+                      'correct-answer': answerResults[currentPageIndex * 12 + index] === true,
+                      'wrong-answer': answerResults[currentPageIndex * 12 + index] === false
                     }"
                   >
-                    {{ index + 1 }}
+                    {{ currentPageIndex * 12 + index + 1 }}
                   </div>
                 </div>
                 <!-- 答题信息 -->
@@ -90,22 +88,21 @@
               </el-card>
               <div v-else v-show="!isLoading">加载中...</div>
               <!-- 按钮容器，移到侧边栏卡片外部 -->
-              <el-row v-if="questionList.length > 0" class="button-container" justify="center">
+              <el-row v-if="currentPageQuestionList.length > 0" class="button-container" justify="center">
                 <el-col>
                   <el-button
                     type="primary"
                     :disabled="false"
-                    @click="currentIndex === questionList.length - 1? submitAnswers() : nextQuestion()"
+                    @click="currentIndex === currentPageQuestionList.length - 1 && isLastPage()? submitAnswers() : nextQuestion()"
                     class="big-button"
                   >
-                    {{ currentIndex === questionList.length - 1? '提交' : '下一题' }}
+                    {{ currentIndex === currentPageQuestionList.length - 1 && isLastPage()? '提交' : '下一题' }}
                   </el-button>
                 </el-col>
               </el-row>
             </el-col>
           </el-row>
         </div>
-      </el-card>
 
       <!-- 尾部固定区域 -->
       <div class="fixed-footer"></div>
@@ -140,19 +137,36 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
-import { useUserStore } from '@/stores/userStore';
+import { useUserStore, useQuestionStore } from '@/store/index';
 import router from '@/router/index';
 import baseurl from '@/http/base';
 
 const userStore = useUserStore();
+const questionStore = useQuestionStore(); // 使用 useQuestionStore
+
 // 登录用户
-const user = computed(() => userStore.userInfo?.username || '未登录用户');
+const user = computed(() => {
+  try {
+    const userInfoObj = JSON.parse(userStore.userInfo);
+    return userInfoObj.username || '未登录用户';
+  } catch (error) {
+    return '未登录用户';
+  }
+});
 // 题目列表
-const questionList = ref([]);
+const questionList = ref(questionStore.questionList); // 从 store 中获取题目列表
 // 当前题目索引
-const currentIndex = ref(0);
+const currentIndex = ref(questionStore.currentIndex); // 从 store 中获取当前题目索引
+// 当前页码索引
+const currentPageIndex = ref(questionStore.currentPageIndex); // 从 store 中获取当前页码索引
+// 当前页的题目列表
+const currentPageQuestionList = computed(() => {
+  const startIndex = currentPageIndex.value * 12;
+  const endIndex = startIndex + 12;
+  return questionList.value.slice(startIndex, endIndex);
+});
 // 当前题目
-const currentQuestion = computed(() => questionList.value[currentIndex.value]);
+const currentQuestion = computed(() => currentPageQuestionList.value[currentIndex.value]);
 // 选择的选项或输入的答案
 const selectedOption = ref('');
 // 答题开始时间
@@ -161,9 +175,9 @@ const startTime = ref(new Date());
 const score = ref(0);
 const score_view = ref(0);
 // 记录每道题的作答情况
-const answerRecords = ref([]);
+const answerRecords = ref(questionStore.answerRecords); // 从 store 中获取作答记录
 // 记录每道题的作答结果（正确或错误）
-const answerResults = ref([]);
+const answerResults = ref(questionStore.answerResults); // 从 store 中获取作答结果
 // 加载状态
 const isLoading = ref(true);
 
@@ -188,11 +202,17 @@ const getFormattedTime = () => {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 };
 
+// 判断是否是最后一页
+const isLastPage = () => {
+  const totalPages = Math.ceil(questionList.value.length / 12);
+  return currentPageIndex.value === totalPages - 1;
+};
+
 // 下一题
 const nextQuestion = () => {
-  if (questionList.value.length > 0 && currentIndex.value < questionList.value.length - 1) {
+  if (currentPageQuestionList.value.length > 0 && currentIndex.value < currentPageQuestionList.value.length - 1) {
     // 记录当前题目的作答情况
-    answerRecords.value[currentIndex.value] = selectedOption.value;
+    answerRecords.value[currentPageIndex.value * 12 + currentIndex.value] = selectedOption.value;
     // 判断答案并计算得分
     const currentAnswer = currentQuestion.value.answer;
     const currentScore = parseInt(currentQuestion.value.score, 10); // 将 score 转换为数字
@@ -201,17 +221,32 @@ const nextQuestion = () => {
       score.value += currentScore;
     }
     // 记录作答结果
-    answerResults.value[currentIndex.value] = isCorrect;
+    answerResults.value[currentPageIndex.value * 12 + currentIndex.value] = isCorrect;
     currentIndex.value++;
     // 恢复当前题目的作答记录
-    selectedOption.value = answerRecords.value[currentIndex.value] || '';
+    selectedOption.value = answerRecords.value[currentPageIndex.value * 12 + currentIndex.value] || '';
+
+    // 更新 store 中的数据
+    questionStore.setAnswerRecords(answerRecords.value);
+    questionStore.setAnswerResults(answerResults.value);
+    questionStore.setCurrentIndex(currentIndex.value);
+  } else if (currentPageQuestionList.value.length > 0 && currentIndex.value === currentPageQuestionList.value.length - 1) {
+    if (!isLastPage()) {
+      // 不是最后一页，切换到下一页
+      currentPageIndex.value++;
+      currentIndex.value = 0;
+
+      // 更新 store 中的数据
+      questionStore.setCurrentPageIndex(currentPageIndex.value);
+      questionStore.setCurrentIndex(currentIndex.value);
+    }
   }
 };
 
 const submitAnswers = async () => {
-  if (questionList.value.length > 0) {
+  if (currentPageQuestionList.value.length > 0 && currentIndex.value === currentPageQuestionList.value.length - 1 && isLastPage()) {
     // 记录最后一题的作答情况
-    answerRecords.value[currentIndex.value] = selectedOption.value;
+    answerRecords.value[currentPageIndex.value * 12 + currentIndex.value] = selectedOption.value;
     // 判断最后一题答案并计算得分
     const currentAnswer = currentQuestion.value.answer;
     const currentScore = parseInt(currentQuestion.value.score, 10); // 将 score 转换为数字
@@ -220,7 +255,7 @@ const submitAnswers = async () => {
       score.value += currentScore;
     }
     // 记录最后一题作答结果
-    answerResults.value[currentIndex.value] = isCorrect;
+    answerResults.value[currentPageIndex.value * 12 + currentIndex.value] = isCorrect;
 
     try {
       // 构建训练数据
@@ -271,7 +306,7 @@ const submitAnswers = async () => {
 
       // 只发送一次请求
       axios.defaults.headers.post['Content-Type'] = 'application/json;charset=UTF-8';
-      const response = await axios.post(baseurl+'/api/submit', submissionData);
+      const response = await axios.post(baseurl + '/api/submit', submissionData);
       console.log('数据提交成功:', response.data);
     } catch (error) {
       console.error('答案提交失败:', error);
@@ -279,6 +314,9 @@ const submitAnswers = async () => {
     score_view.value = score.value;
     score.value = 0;
     Flag.value = 1;
+
+    // 提交答案后重置 store 中的数据
+    questionStore.resetState();
   }
 };
 
@@ -291,12 +329,18 @@ onMounted(async () => {
   htmlElement.style.height = '95%';
 
   try {
-    // 发送请求获取题目数据
-    const response = await axios.get(baseurl+'/api/questions');
-    questionList.value = response.data;
-    // 初始化作答记录和结果数组
-    answerRecords.value = Array(questionList.value.length).fill('');
-    answerResults.value = Array(questionList.value.length).fill(null);
+    if (questionList.value.length === 0) { // 如果 store 中没有题目数据，再去请求
+      // 发送请求获取题目数据
+      const response = await axios.get(baseurl + '/api/questions');
+      questionList.value = response.data;
+      questionStore.setQuestionList(questionList.value); // 更新 store 中的题目列表
+
+      // 初始化作答记录和结果数组
+      answerRecords.value = Array(questionList.value.length).fill('');
+      answerResults.value = Array(questionList.value.length).fill(null);
+      questionStore.setAnswerRecords(answerRecords.value);
+      questionStore.setAnswerResults(answerResults.value);
+    }
     isLoading.value = false;
   } catch (error) {
     console.error('获取题目数据失败:', error);
@@ -306,19 +350,13 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* 样式部分保持不变 */
 html, body {
   margin: 0;
   padding: 0;
   height: 100%;
 }
 
-.page-container {
-  display: flex;
-  flex-direction: column;
-  height: 95vh; /* 使用视口高度 */
-  width: 100%; /* 修改为 100%，确保不溢出 */
-  overflow-x: hidden; /* 防止水平溢出 */
-}
 
 .main-content {
   width: 100%;
@@ -433,7 +471,6 @@ html, body {
   background-color: red;
   color: white;
 }
-
 .fixed-footer {
   position: fixed;
   bottom: 0;
@@ -452,7 +489,6 @@ html, body {
 .footer-text {
   text-align: center;
 }
-
 /* 页面二样式 */
 .result-page {
   background-color: transparent; /* 修改为透明背景 */
@@ -596,6 +632,7 @@ html, body {
 .patieny-summary-title {
   font-size: 20px;
   font-weight: bold;
+  margin-left: 30px;
 }
 
 .question-text {
@@ -613,4 +650,13 @@ html, body {
     width: 100%;
   }
 }
+
+/* 移除顶部白条区域样式 */
+.summary-top-space {
+  height: 10px;
+  background-color: transparent;
+  /* 修改顶部外边距 */
+  margin-top: 20px;
+}
+
 </style>

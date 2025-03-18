@@ -4,9 +4,8 @@
   <div class="summary-top-space"></div>
 
   <!-- 患者情况概况区域 -->
-  <el-card class="patient-summary">
-    <template #header>
-      <div class="header-flex">
+
+    <div class="header-flex">
         <h2 class="patieny-summary-title">患者情况概况：</h2>
         <!-- 新增一个容器包裹日期选择框 -->
         <div class="date-picker-wrapper">
@@ -18,7 +17,6 @@
           ></el-date-picker>
         </div>
       </div>
-    </template>
     <!-- 折线图和饼状图容器 -->
     <div class="chart-container">
       <div ref="lineChartRef" class="line-chart"></div>
@@ -49,12 +47,11 @@
         :total="filteredTableData.length"
       />
     </div>
-  </el-card>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
-import { useUserStore } from '@/stores/userStore';
+import { ref, computed, onMounted, watch, nextTick } from 'vue';
+import { useUserStore } from '@/store/index';
 import router from '@/router/index';
 import axios from 'axios';
 import { format } from 'date-fns';
@@ -63,7 +60,14 @@ import baseurl from '@/http/base';
 
 const userStore = useUserStore();
 // 登录用户
-const user = computed(() => userStore.userInfo?.username || '未登录用户');
+const user = computed(() => userStore.userInfo); // 修改为直接获取 userInfo
+
+// 检查用户是否登录，如果未登录则重定向到登录页面
+watch(user, (newValue) => {
+  if (!newValue) {
+    router.push('/login');
+  }
+});
 
 const tableData = ref([]);
 const selectedDate = ref(null);
@@ -104,7 +108,7 @@ const currentPageData = computed(() => {
 
 const logout = () => {
   console.log('用户登出');
-  userStore.logout();
+  userStore.clearUserInfo(); // 使用 store 中的方法清除用户信息
   router.push('/login');
 };
 
@@ -229,60 +233,80 @@ const handleCurrentChange = (page) => {
 };
 
 onMounted(async () => {
-  try {
-    const response = await axios.get(baseurl+`/api/deliverScoreData?username=${user.value}`);
-    const data = response.data.data; // 先获取 "data" 键对应的值
+  if (user.value) {
+    try {
+      // 将 userInfo 字符串转换为对象
+      const userInfoObj = JSON.parse(user.value);
+      const username = userInfoObj.username;
+      const response = await axios.get(baseurl + `/api/deliverScoreData?username=${username}`);
+      const data = response.data.data; // 先获取 "data" 键对应的值
 
-    // 创建对象来按日期和id分组存储数据
-    const recordsMap = new Map();
+      // 创建对象来按日期和id分组存储数据
+      const recordsMap = new Map();
 
-    // 遍历所有训练类型
-    for (const trainingType in data) {
-      // 遍历每个训练类型的数据项
-      for (const item of data[trainingType]) {
-        const key = `${item.date}-${item.id}`;
+      // 遍历所有训练类型
+      for (const trainingType in data) {
+        // 遍历每个训练类型的数据项
+        for (const item of data[trainingType]) {
+          const key = `${item.date}-${item.id}`;
 
-        // 如果不存在则初始化记录
-        if (!recordsMap.has(key)) {
-          recordsMap.set(key, {
-            date: item.date,
-            // 移除 id
-            失算症训练: 0,
-            思维障碍训练: 0,
-            注意障碍训练: 0,
-            知觉障碍训练: 0,
-            记忆障碍训练: 0,
-            totalScore: 0,
-            // 添加认知功能
-            认知功能: item['认知功能']
-          });
+          // 如果不存在则初始化记录
+          if (!recordsMap.has(key)) {
+            recordsMap.set(key, {
+              date: item.date,
+              // 移除 id
+              失算症训练: 0,
+              思维障碍训练: 0,
+              注意障碍训练: 0,
+              知觉障碍训练: 0,
+              记忆障碍训练: 0,
+              totalScore: 0,
+              // 添加认知功能
+              认知功能: item['认知功能']
+            });
+          }
+
+          // 获取当前记录
+          const record = recordsMap.get(key);
+
+          // 将当前训练类型的值转换为数字（处理无效值为0）
+          const numericValue = Number(item.value) || 0;
+
+          // 更新对应训练类型的值和总分
+          record[trainingType] = numericValue;
+          record.totalScore += numericValue;
         }
-
-        // 获取当前记录
-        const record = recordsMap.get(key);
-
-        // 将当前训练类型的值转换为数字（处理无效值为0）
-        const numericValue = Number(item.value) || 0;
-
-        // 更新对应训练类型的值和总分
-        record[trainingType] = numericValue;
-        record.totalScore += numericValue;
       }
+
+      // 将Map转换为数组并排序
+      const allRows = Array.from(recordsMap.values()).sort((a, b) => {
+        const dateA = new Date(convertDate(a.date));
+        const dateB = new Date(convertDate(b.date));
+        if (dateA.getTime() === dateB.getTime()) {
+          const timeA = new Date(a.date);
+          const timeB = new Date(b.date);
+          const hourDiff = timeB.getHours() - timeA.getHours();
+          if (hourDiff!== 0) {
+            return hourDiff;
+          }
+          const minuteDiff = timeB.getMinutes() - timeA.getMinutes();
+          if (minuteDiff!== 0) {
+            return minuteDiff;
+          }
+          return timeB.getSeconds() - timeA.getSeconds();
+        }
+        return dateB - dateA || (a['认知功能'] > b['认知功能']? 1 : -1);
+      });
+
+      tableData.value = allRows;
+
+      drawLineChart(); // 初始加载时绘制折线图
+      drawPieChart(); // 初始加载时绘制饼状图
+    } catch (error) {
+      console.error('获取数据失败:', error);
     }
-
-    // 将Map转换为数组并排序
-    const allRows = Array.from(recordsMap.values()).sort((a, b) => {
-      const dateA = new Date(convertDate(a.date));
-      const dateB = new Date(convertDate(b.date));
-      return dateB - dateA || (a['认知功能'] > b['认知功能']? 1 : -1);
-    });
-
-    tableData.value = allRows;
-
-    drawLineChart(); // 初始加载时绘制折线图
-    drawPieChart(); // 初始加载时绘制饼状图
-  } catch (error) {
-    console.error('获取数据失败:', error);
+  } else {
+    router.push('/login');
   }
 });
 
@@ -366,29 +390,29 @@ watch(selectedDate, () => {
 
 /* 响应式调整 */
 @media (max-width: 1200px) {
-  .training-item {
+ .training-item {
     min-width: calc(25% - 12px);
   }
 }
 
 @media (max-width: 992px) {
-  .training-item {
+ .training-item {
     min-width: calc(33.33% - 12px);
   }
 }
 
 @media (max-width: 768px) {
-  .training-item {
+ .training-item {
     min-width: calc(50% - 12px);
   }
 }
 
 @media (max-width: 480px) {
-  .training-item {
+ .training-item {
     min-width: 100%;
   }
   /* 在小屏幕下，让表格可以横向滚动 */
-  .table-data {
+ .table-data {
     overflow-x: auto;
   }
 }
@@ -431,6 +455,7 @@ watch(selectedDate, () => {
 .patieny-summary-title {
   font-size: 20px;
   font-weight: bold;
+  margin-left: 30px;
 }
 
 /* 新增分页组件父容器的样式 */

@@ -9,18 +9,29 @@
 </template>
 
 <script lang="ts" setup>
-import { ref,computed } from 'vue';
-// import Message from '@/components/Message.vue';
+import { ref, computed } from 'vue';
 import Avatar from '@/components/AppAvatar.vue';
-import { useUserStore } from "@/stores/userStore";
+import { useUserStore } from "@/store/index";
 
-// 手动管理用户信息，这里假设一个默认的用户名
 const userStore = useUserStore();
-const user = computed(() => (userStore.userInfo as { username: string }).username || '未登录用户');
+
+const user = computed(() => {
+  try {
+    // 尝试将 userInfo 字符串解析为对象
+    const userInfoObj = JSON.parse(userStore.userInfo);
+    // 从解析后的对象中提取 username
+    return userInfoObj.username || '未登录用户';
+  } catch (error) {
+    // 如果解析失败，说明 userInfo 不是有效的 JSON 字符串，返回默认值
+    console.error('解析 userInfo 失败:', error);
+    return '未登录用户';
+  }
+});
+
 // 如果有获取用户信息的接口调用，可以在这里模拟
 // 例如：
 // setTimeout(() => {
-//     username.value = '实际用户名';
+//     userStore.setUserInfo('{"username":"实际用户名"}');
 // }, 1000);
 
 </script>

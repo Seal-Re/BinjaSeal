@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import { useUserStore } from '@/stores/userStore';
+import { useUserStore } from '@/store/index';
 
 
 const router = createRouter({
@@ -26,7 +26,7 @@ const router = createRouter({
         name: 'Home',
         component: () => import('@/views/Home/AppIndex.vue'),
         meta: {
-          title: '首页',
+          title: '主页',
           layout: true,
           icon: 'HomeFilled',
       },
@@ -60,12 +60,9 @@ const router = createRouter({
         // 如果已经登录，访问登录页则重定向到主页
         next('/home');
     }
-    else if (!isLoggedIn && (to.name!== 'Login' && to.name!== 'Register') ) {
-        // 如果未登录，且访问的不是登录页，则重定向到登录页
-        next('/login');
-    } else {
-        // 其他情况正常放行
-        next();
+    else {
+      // 其他情况正常放行
+      next();
     }
 });
 

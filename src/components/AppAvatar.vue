@@ -19,8 +19,9 @@
 <script setup lang="ts">
 import router from '@/router/index';
 import { ElMessageBox, ElMessage } from 'element-plus';
-import { useUserStore } from '@/stores/userStore';
+import { useUserStore } from '@/store/index';
 const userStore = useUserStore();
+
 // 退出登录
 const logout = () => {
   ElMessageBox.confirm('您是否确认退出登录?', '温馨提示', {
@@ -28,11 +29,11 @@ const logout = () => {
       cancelButtonText: '取消',
       type: 'warning',
   }).then(() => {
-
       ElMessage.success('退出登录成功！');
       console.log('用户登出');
-      userStore.logout();
-      router.push('/login');
+      userStore.clearUserInfo();
+      // 切换到登录页面，并传递一个随机参数（这里用时间戳示例）来触发登录页面的重新渲染
+      router.push({ name: 'Login', query: { r: Date.now() } });
   });
 };
 </script>

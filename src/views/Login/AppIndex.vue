@@ -82,7 +82,7 @@
 import { ref, onMounted } from "vue";
 import router from "@/router/index";
 import axios from "axios";
-import { useUserStore } from "@/stores/userStore";
+import { useUserStore } from "@/store/index";
 import { reactive } from "vue";
 import { ElMessage } from 'element-plus';
 import baseurl from '@/http/base';
@@ -147,7 +147,13 @@ const handleLogin = async () => {
         isLoginFailed.value = 0;
       }, 1000);
 
-      userStore.login(userData);
+      // 假设服务器返回的响应中包含 token 和 userInfo
+      const { token, userInfo } = response.data;
+
+      // 使用 userStore 的方法设置 token 和 userInfo
+      userStore.setToken(token);
+      userStore.setUserInfo(userInfo);
+
       router.push("/home");
     } else {
       isLoginFailed.value = 2;
