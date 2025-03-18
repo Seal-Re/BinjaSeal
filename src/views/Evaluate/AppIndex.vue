@@ -421,7 +421,6 @@ onMounted(async () => {
   }
 });
 </script>
-
 <style scoped>
 /* 样式部分保持不变 */
 html, body {
