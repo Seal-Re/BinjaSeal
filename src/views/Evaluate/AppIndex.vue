@@ -4,105 +4,136 @@
   <div v-if="Flag === 0">
     <div class="page-container">
       <!-- 新增用户评估区域 -->
-          <div class="header-flex">
-            <h2 class="patieny-summary-title">认知评估测试：</h2>
-          </div>
-        <!-- 主要内容 -->
-        <div class="main-content-container">
-          <el-row class="main-content" :gutter="20">
-            <!-- 题目容器 -->
-            <el-col :span="18">
-              <el-card v-if="currentPageQuestionList.length > 0" class="question-box">
-                <template #header>
-                  <h3 class="question-text">{{ currentQuestion.question }}</h3>
-                </template>
-                <!-- 根据 model 参数判断渲染选择题还是填空题 -->
-                <template v-if="currentQuestion.model === '0'">
-                  <el-radio-group v-model="selectedOption" class="custom-radio-group">
-                    <el-radio
+      <div class="header-flex">
+        <h2 class="patieny-summary-title">认知评估测试：</h2>
+      </div>
+      <!-- 主要内容 -->
+      <div class="main-content-container">
+        <el-row class="main-content" :gutter="20">
+          <!-- 题目容器 -->
+          <el-col :span="18">
+            <el-card v-if="currentPageQuestionList.length > 0" class="question-box">
+              <template #header>
+                <h3 class="question-text">{{ currentQuestion.question }}</h3>
+              </template>
+              <!-- 根据 model 参数判断渲染选择题还是填空题 -->
+              <template v-if="currentQuestion.model === '0'">
+                <el-radio-group v-model="selectedOption" class="custom-radio-group" :disabled="showDetails">
+                  <el-radio
+                    v-for="(option, index) in currentQuestion.options"
+                    :key="index"
+                    :label="option"
+                    class="custom-radio"
+                  >
+                    {{ option }}
+                  </el-radio>
+                </el-radio-group>
+              </template>
+              <template v-else-if="currentQuestion.model === '1'">
+                <el-input v-model="selectedOption" placeholder="请输入答案" :disabled="showDetails"></el-input>
+              </template>
+              <!-- 新增图片选择题 -->
+              <template v-else-if="currentQuestion.model === '2'">
+                <el-radio-group v-model="selectedOption" class="image-radio-group" :disabled="showDetails">
+                  <el-row :gutter="20" class="image-options-container">
+                    <el-col
                       v-for="(option, index) in currentQuestion.options"
                       :key="index"
-                      :label="option"
-                      class="custom-radio"
+                      :span="12"
+                      class="image-option-col"
                     >
-                      {{ option }}
-                    </el-radio>
-                  </el-radio-group>
-                </template>
-                <template v-else-if="currentQuestion.model === '1'">
-                  <el-input v-model="selectedOption" placeholder="请输入答案"></el-input>
-                </template>
-                <!-- 新增图片选择题 -->
-                <template v-else-if="currentQuestion.model === '2'">
-                  <el-radio-group v-model="selectedOption" class="image-radio-group">
-                    <el-row :gutter="20" class="image-options-container">
-                      <el-col
-                        v-for="(option, index) in currentQuestion.options"
-                        :key="index"
-                        :span="12"
-                        class="image-option-col"
-                      >
-                        <el-radio :label="option" class="image-radio-item">
-                          <div class="image-wrapper">
-                            <img
-                              :src="baseurl+`/images_data/?name=${option}`"
-                              alt="选项图片"
-                              class="option-image"
-                            >
-                          </div>
-                        </el-radio>
-                      </el-col>
-                    </el-row>
-                  </el-radio-group>
-                </template>
-              </el-card>
-              <div v-else v-show="!isLoading">加载中...</div>
-            </el-col>
-            <!-- 侧边栏 -->
-            <el-col :span="6">
-              <el-card v-if="currentPageQuestionList.length > 0" class="side-bar">
-                <!-- 题目列表 -->
-                <template #header>
-                  <div class="header-list">
-                    <h3>题目列表</h3>
-                  </div>
-                </template>
-                <div class="question-list">
-                  <div
-                    v-for="(item, index) in currentPageQuestionList"
-                    :key="index"
-                    class="question-number"
-                    :class="{
-                      'correct-answer': answerResults[currentPageIndex * 12 + index] === true,
-                      'wrong-answer': answerResults[currentPageIndex * 12 + index] === false
-                    }"
-                  >
-                    {{ currentPageIndex * 12 + index + 1 }}
-                  </div>
+                      <el-radio :label="option" class="image-radio-item">
+                        <div class="image-wrapper">
+                          <img
+                            :src="baseurl+`/images_data/?name=${option}`"
+                            alt="选项图片"
+                            class="option-image"
+                          >
+                        </div>
+                      </el-radio>
+                    </el-col>
+                  </el-row>
+                </el-radio-group>
+              </template>
+              <!-- 题目详情模式下展示正确答案 -->
+              <template v-if="showDetails">
+                <div class="correct-answer-container">
+                  <p class="correct-answer-text">正确答案: <span class="correct-answer-value">{{ currentQuestion.answer }}</span></p>
                 </div>
-                <!-- 答题信息 -->
-                <div class="answer-info">
-                  <p>答题时间：{{ getFormattedTime() }}</p>
-                  <p>当前得分：{{ score }}</p>
+              </template>
+            </el-card>
+            <div v-else v-show="!isLoading">加载中...</div>
+          </el-col>
+          <!-- 侧边栏 -->
+          <el-col :span="6">
+            <el-card v-if="currentPageQuestionList.length > 0" class="side-bar">
+              <!-- 题目列表 -->
+              <template #header>
+                <div class="header-list">
+                  <h3>题目列表</h3>
                 </div>
-              </el-card>
-              <div v-else v-show="!isLoading">加载中...</div>
-              <!-- 按钮容器，移到侧边栏卡片外部 -->
-              <el-row v-if="currentPageQuestionList.length > 0" class="button-container" justify="center">
-                <el-col>
-                  <el-button
-                    type="primary"
-                    :disabled="false"
-                    @click="currentIndex === currentPageQuestionList.length - 1 && isLastPage()? submitAnswers() : nextQuestion()"
-                    class="big-button"
-                  >
-                    {{ currentIndex === currentPageQuestionList.length - 1 && isLastPage()? '提交' : '下一题' }}
-                  </el-button>
-                </el-col>
-              </el-row>
-            </el-col>
-          </el-row>
-        </div>
+              </template>
+              <div class="question-list">
+                <div
+                  v-for="(item, index) in currentPageQuestionList"
+                  :key="index"
+                  class="question-number"
+                  :class="{
+                    'correct-answer': answerResults[currentPageIndex * 12 + index] === true,
+                    'wrong-answer': answerResults[currentPageIndex * 12 + index] === false
+                  }"
+                  @click="changeCurrentQuestion(currentPageIndex * 12 + index)"
+                >
+                  {{ currentPageIndex * 12 + index + 1 }}
+                </div>
+              </div>
+              <!-- 新增翻页按钮 -->
+              <div class="page-navigation">
+                <el-button
+                  type="primary"
+                  @click="prevPage"
+                >
+                  上一页
+                </el-button>
+                <el-button
+                  type="primary"
+                  @click="nextPage"
+                >
+                  下一页
+                </el-button>
+              </div>
+              <!-- 答题信息 -->
+              <div class="answer-info">
+                <p>答题时间：{{ getFormattedTime() }}</p>
+                <p>当前得分：{{ score }}</p>
+              </div>
+            </el-card>
+            <div v-else v-show="!isLoading">加载中...</div>
+            <!-- 按钮容器，移到侧边栏卡片外部 -->
+            <el-row v-if="currentPageQuestionList.length > 0" class="button-container" justify="center">
+              <el-col>
+                <el-button
+                  type="primary"
+                  :disabled="false"
+                  @click="currentIndex === currentPageQuestionList.length - 1 && isLastPage()? submitAnswers() : nextQuestion()"
+                  class="big-button"
+                  v-show="!showDetails"
+                >
+                  {{ currentIndex === currentPageQuestionList.length - 1 && isLastPage()? '提交' : '下一题' }}
+                </el-button>
+                <el-button
+                  type="primary"
+                  class="big-button"
+                  v-show="showDetails"
+                  @click="goBackHome"
+                >
+                  返回首页
+                </el-button>
+              </el-col>
+            </el-row>
+          </el-col>
+        </el-row>
+      </div>
 
       <!-- 尾部固定区域 -->
       <div class="fixed-footer"></div>
@@ -182,15 +213,25 @@ const answerResults = ref(questionStore.answerResults); // 从 store 中获取�
 const isLoading = ref(true);
 
 const Flag = ref(0);
+const showDetails = ref(false); // 新增：控制是否显示题目详情
 
-// 查看题目详情方法，可按需实现具体逻辑
+// 查看题目详情方法，实现具体逻辑
 const showQuestionDetails = () => {
-  console.log('查看题目详情逻辑');
+  showDetails.value = true;
+  // 重置当前题目索引为第一题
+  currentIndex.value = 0;
+  currentPageIndex.value = 0;
+  Flag.value = 0;
+  // 设置选项为用户已提交的选项
+  selectedOption.value = answerRecords.value[currentPageIndex.value * 12 + currentIndex.value] || '';
 };
 
 // 返回主页方法
 const goBackHome = () => {
   router.push('/home');
+  showDetails.value = false;
+  // 重置 store 中的数据
+  questionStore.resetState();
 };
 
 // 获取格式化后的答题时间
@@ -210,7 +251,7 @@ const isLastPage = () => {
 
 // 下一题
 const nextQuestion = () => {
-  if (currentPageQuestionList.value.length > 0 && currentIndex.value < currentPageQuestionList.value.length - 1) {
+  if (currentPageQuestionList.value.length > 0) {
     // 记录当前题目的作答情况
     answerRecords.value[currentPageIndex.value * 12 + currentIndex.value] = selectedOption.value;
     // 判断答案并计算得分
@@ -222,7 +263,17 @@ const nextQuestion = () => {
     }
     // 记录作答结果
     answerResults.value[currentPageIndex.value * 12 + currentIndex.value] = isCorrect;
-    currentIndex.value++;
+
+    if (currentIndex.value < currentPageQuestionList.value.length - 1) {
+      currentIndex.value++;
+    } else {
+      if (!isLastPage()) {
+        // 不是最后一页，切换到下一页
+        currentPageIndex.value++;
+        currentIndex.value = 0;
+      }
+    }
+
     // 恢复当前题目的作答记录
     selectedOption.value = answerRecords.value[currentPageIndex.value * 12 + currentIndex.value] || '';
 
@@ -230,16 +281,7 @@ const nextQuestion = () => {
     questionStore.setAnswerRecords(answerRecords.value);
     questionStore.setAnswerResults(answerResults.value);
     questionStore.setCurrentIndex(currentIndex.value);
-  } else if (currentPageQuestionList.value.length > 0 && currentIndex.value === currentPageQuestionList.value.length - 1) {
-    if (!isLastPage()) {
-      // 不是最后一页，切换到下一页
-      currentPageIndex.value++;
-      currentIndex.value = 0;
-
-      // 更新 store 中的数据
-      questionStore.setCurrentPageIndex(currentPageIndex.value);
-      questionStore.setCurrentIndex(currentIndex.value);
-    }
+    questionStore.setCurrentPageIndex(currentPageIndex.value);
   }
 };
 
@@ -317,6 +359,37 @@ const submitAnswers = async () => {
 
     // 提交答案后重置 store 中的数据
     questionStore.resetState();
+  }
+};
+
+// 新增：点击题目列表序号改变当前题目
+const changeCurrentQuestion = (index) => {
+  currentPageIndex.value = Math.floor(index / 12);
+  currentIndex.value = index % 12;
+  selectedOption.value = answerRecords.value[index] || '';
+};
+
+// 新增：上一页方法
+const prevPage = () => {
+  if (currentPageIndex.value > 0) {
+    currentPageIndex.value--;
+    currentIndex.value = 0;
+
+    // 更新 store 中的数据
+    questionStore.setCurrentPageIndex(currentPageIndex.value);
+    questionStore.setCurrentIndex(currentIndex.value);
+  }
+};
+
+// 新增：下一页方法
+const nextPage = () => {
+  if (!isLastPage()) {
+    currentPageIndex.value++;
+    currentIndex.value = 0;
+
+    // 更新 store 中的数据
+    questionStore.setCurrentPageIndex(currentPageIndex.value);
+    questionStore.setCurrentIndex(currentIndex.value);
   }
 };
 
@@ -418,6 +491,13 @@ html, body {
 
 .button-container {
   margin-top: 20px;
+}
+
+.big-button {
+  font-size: 18px; /* 增大字体大小 */
+  padding: 20px 24px; /* 增大上下内边距以放大高度 */
+  width: 100%; /* 使按钮宽度填满父容器 */
+  height: 60px;
 }
 
 .big-button {
@@ -650,6 +730,7 @@ html, body {
     width: 100%;
   }
 }
+
 
 /* 移除顶部白条区域样式 */
 .summary-top-space {
