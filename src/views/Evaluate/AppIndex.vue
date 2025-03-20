@@ -302,14 +302,14 @@ const submitAnswers = async () => {
     try {
       // 构建训练数据
       const trainingData = {
-        "失算症训练": { "data": [] },
-        "思维障碍训练": { "data": [] },
-        "注意障碍训练": { "data": [] },
-        "知觉障碍训练": { "data": [] },
-        "记忆障碍训练": { "data": [] }
+        "失算症训练": { "data": [], "totalScore": 0, "correctScore": 0 },
+        "思维障碍训练": { "data": [], "totalScore": 0, "correctScore": 0 },
+        "注意障碍训练": { "data": [], "totalScore": 0, "correctScore": 0 },
+        "知觉障碍训练": { "data": [], "totalScore": 0, "correctScore": 0 },
+        "记忆障碍训练": { "data": [], "totalScore": 0, "correctScore": 0 }
       };
 
-      // 填充训练数据
+      // 填充训练数据并计算每类题目的总得分和正确得分
       for (let i = 0; i < questionList.value.length; i++) {
         const question = questionList.value[i];
         const type = question.class;
@@ -323,7 +323,20 @@ const submitAnswers = async () => {
             day: '2-digit'
           })
         });
+        trainingData[type].totalScore += parseInt(question.score, 10);
+        if (answerResults.value[i]) {
+          trainingData[type].correctScore += parseInt(question.score, 10);
+        }
       }
+
+      // 计算每类题目的得分率
+      const scoreRates = {
+        "失算症训练": trainingData["失算症训练"].totalScore > 0? (trainingData["失算症训练"].correctScore / trainingData["失算症训练"].totalScore) * 100 : 0,
+        "思维障碍训练": trainingData["思维障碍训练"].totalScore > 0? (trainingData["思维障碍训练"].correctScore / trainingData["思维障碍训练"].totalScore) * 100 : 0,
+        "注意障碍训练": trainingData["注意障碍训练"].totalScore > 0? (trainingData["注意障碍训练"].correctScore / trainingData["注意障碍训练"].totalScore) * 100 : 0,
+        "知觉障碍训练": trainingData["知觉障碍训练"].totalScore > 0? (trainingData["知觉障碍训练"].correctScore / trainingData["知觉障碍训练"].totalScore) * 100 : 0,
+        "记忆障碍训练": trainingData["记忆障碍训练"].totalScore > 0? (trainingData["记忆障碍训练"].correctScore / trainingData["记忆障碍训练"].totalScore) * 100 : 0
+      };
 
       // 构建提交数据
       const submissionData = {
@@ -343,7 +356,8 @@ const submitAnswers = async () => {
             })
           }
         ],
-        trainingData: trainingData  // 添加训练数据字段
+        trainingData: trainingData,  // 添加训练数据字段
+        scoreRates: scoreRates  // 添加得分率字段
       };
 
       // 只发送一次请求
