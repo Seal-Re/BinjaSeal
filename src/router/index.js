@@ -19,35 +19,44 @@ const router = createRouter({
         meta: {
           title: '登陆',
           layout: false,
-      },
+        },
       },
       {
         path: '/home',
         name: 'Home',
         component: () => import('@/views/Home/AppIndex.vue'),
         meta: {
-          title: '主页',
+          title: '首页',
           layout: true,
           icon: 'HomeFilled',
-      },
+        },
       },
       {
         path: '/evaluate',
         name: 'Evaluate',
         component: () => import('@/views/Evaluate/AppIndex.vue'),
         meta: {
-          title: '评估',
+          title: '认知评估',
           layout: true,
-      },
+        },
       },
       {
         path: '/train',
         name: 'Train',
         component: () => import('@/views/Train/AppIndex.vue'),
         meta: {
-          title: '训练',
+          title: '认知训练',
           layout: true,
+        },
       },
+      {
+        path: '/aiTips',
+        name: 'AITips',
+        component: () => import('@/views/AITips/AppIndex.vue'),
+        meta: {
+          title: 'AI建议',
+          layout: true,
+        },
       },
     ]
   });

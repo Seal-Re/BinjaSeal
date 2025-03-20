@@ -174,7 +174,6 @@ import baseurl from '@/http/base';
 
 const userStore = useUserStore();
 const questionStore = useQuestionStore(); // 使用 useQuestionStore
-
 // 登录用户
 const user = computed(() => {
   try {
@@ -364,13 +363,15 @@ const submitAnswers = async () => {
       axios.defaults.headers.post['Content-Type'] = 'application/json;charset=UTF-8';
       const response = await axios.post(baseurl + '/api/submit', submissionData);
       console.log('数据提交成功:', response.data);
+
     } catch (error) {
       console.error('答案提交失败:', error);
     }
     score_view.value = score.value;
     score.value = 0;
     Flag.value = 1;
-
+    //我在这个地方调用了ai的api，来获取建议
+    axios.get(baseurl + `/api/AI?username=${user.value}`);
     // 提交答案后重置 store 中的数据
     questionStore.resetState();
   }

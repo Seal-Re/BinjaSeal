@@ -34,6 +34,14 @@
                   <span v-if="!isCollapse">认知训练</span>
                 </template>
               </el-menu-item>
+              <!-- 训练菜单 -->
+              <el-menu-item index="/aiTips">
+                <template #title>
+                  <img v-if="!isCollapse" class="menu-icon" src="@/assets/icons/AITips.svg" alt="AITips icon" />
+                  <i v-else class="el-icon-document"></i>
+                  <span v-if="!isCollapse">AI建议</span>
+                </template>
+              </el-menu-item>
             </div>
           </el-menu>
         </el-scrollbar>

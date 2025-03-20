@@ -76,7 +76,7 @@ const pieChartRef = ref(null);
 
 // 分页相关变量
 const currentPage = ref(1);
-const pageSize = ref(5);
+const pageSize = ref(10);//每一页最大放的数据量
 
 // 定义一个函数将日期格式从 2025/3/1 转换为 2025 - 03 - 01
 const convertDate = (dateStr) => {
