@@ -32,6 +32,7 @@
               <!-- 答题信息 -->
               <div class="answer-info">
                 <p>用户: {{ user }}</p>
+                <p v-if="userName">姓名: {{ userName }}</p> <!-- 添加姓名展示 -->
               </div>
             </el-card>
           </el-col>
@@ -65,6 +66,7 @@ const user = computed(() => {
 });
 const aiTips = ref([]);
 const isLoading = ref(true);
+const userName = ref(''); // 用于存储用户姓名
 
 onMounted(async () => {
   try {
@@ -75,42 +77,45 @@ onMounted(async () => {
       const suggestion = response.data[0].data[0];
       aiTips.value = [suggestion.ai_tips];
     }
+
+    // 发送请求获取用户信息
+    const userInfoResponse = await axios.get(baseurl + `/api/userinfo_get?user=${user.value}`);
+    if (userInfoResponse.data.user_info) {
+      userName.value = userInfoResponse.data.user_info.name || '';
+    }
+
     isLoading.value = false;
   } catch (error) {
-    console.error('获取 AI 建议失败:', error);
+    console.error('获取数据失败:', error);
     isLoading.value = false;
   }
 });
 </script>
 
 <style scoped>
-/* 页面整体样式 */
+
 .ai-tips-page {
   background-color: #ffffff;
 }
 
-/* 标题样式 */
 .ai-tips-title {
   font-size: 20px;
   font-weight: bold;
   margin-left: 30px;
 }
 
-/* 建议文本样式 */
 .tips-text {
   font-size: 18px;
   font-weight: bold;
   margin: 0;
 }
 
-/* 公共框样式 */
 .common-box {
   border: 1px solid #e0e0e0;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-/* 建议容器样式 */
 .tips-box {
   height: 100%;
   width: 100%;
@@ -120,19 +125,16 @@ onMounted(async () => {
   margin-left: 30px;
 }
 
-/* 建议内容样式 */
 .tips-content {
   font-size: 16px;
   line-height: 1.6;
 }
 
-/* 添加滚动条样式 */
 .scrollable-content {
   max-height: 600px;
   overflow-y: auto;
 }
 
-/* 侧边栏样式 */
 .side-bar {
   height:40%;
   width:85%;
@@ -147,12 +149,10 @@ onMounted(async () => {
   padding-top: 20px;
 }
 
-/* 按钮容器样式 */
 .button-container {
   margin-top: 20px;
 }
 
-/* 大按钮样式 */
 .big-button {
   font-size: 18px;
   padding: 20px 24px;
@@ -160,7 +160,6 @@ onMounted(async () => {
   height: 60px;
 }
 
-/* 尾部固定区域样式 */
 .fixed-footer {
   position: fixed;
   bottom: 0;

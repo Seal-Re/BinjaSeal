@@ -92,6 +92,14 @@ const menuList = [
   {
     path: '/train',
     name: '认知训练'
+  },
+  {
+    path: '/aiTips',
+    name: 'AI建议'
+  },
+  {
+    path: '/userinfo',
+    name: '用户信息'
   }
 ];
 

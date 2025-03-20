@@ -58,6 +58,15 @@ const router = createRouter({
           layout: true,
         },
       },
+      {
+        path: '/userinfo',
+        name: 'Userinfo',
+        component: () => import('@/views/Userinfo/AppIndex.vue'),
+        meta: {
+          title: '用户信息',
+          layout: true,
+        },
+      },
     ]
   });
 

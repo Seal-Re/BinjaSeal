@@ -5,7 +5,7 @@
       </div>
       <template #dropdown>
           <el-dropdown-menu>
-              <el-dropdown-item>
+              <el-dropdown-item @click="goToUserInfo">
                   <el-icon><User /></el-icon>个人信息
               </el-dropdown-item>
               <el-dropdown-item divided @click="logout">
@@ -22,6 +22,10 @@ import { ElMessageBox, ElMessage } from 'element-plus';
 import { useUserStore } from '@/store/index';
 const userStore = useUserStore();
 
+const goToUserInfo = () => {
+  router.push('/userinfo');
+};
+
 // 退出登录
 const logout = () => {
   ElMessageBox.confirm('您是否确认退出登录?', '温馨提示', {
@@ -32,7 +36,6 @@ const logout = () => {
       ElMessage.success('退出登录成功！');
       console.log('用户登出');
       userStore.clearUserInfo();
-      // 切换到登录页面，并传递一个随机参数（这里用时间戳示例）来触发登录页面的重新渲染
       router.push({ name: 'Login', query: { r: Date.now() } });
   });
 };
