@@ -5,4 +5,5 @@ import useUserStore from './modules/user';
 import useCollapseStore from './modules/collapse';
 import useContainerStore from './modules/container';
 import useQuestionStore from './modules/questions';
-export { useBreadCrumb, useLoadingStore, useTabsStore, useUserStore, useCollapseStore, useContainerStore, useQuestionStore };
+import usequestion_trainStore from './modules/questions_train';
+export { useBreadCrumb, useLoadingStore, useTabsStore, useUserStore, useCollapseStore, useContainerStore, useQuestionStore, usequestion_trainStore };

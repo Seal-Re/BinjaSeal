@@ -16,7 +16,7 @@
                 clearable
                 size="large"
               />
-            </div>
+                        </div>
           </el-form-item>
           <el-form-item>
             <div class="el_input_wrapper">
@@ -27,19 +27,19 @@
                 show-password
                 size="large"
               />
-            </div>
+                </div>
           </el-form-item>
         </el-form>
         <div class="el_button_wrapper">
           <el-button class="login_button" type="danger" @click="handleLogin">登录</el-button>
-        </div>
+                </div>
 
         <div class="button-group">
           <el-button @click="handleRegister" type="" link> 注册&nbsp;|</el-button>
 
           <el-button type="" link>忘记密码 </el-button>
-        </div>
-      </div>
+                </div>
+              </div>
       <div v-else class="log_IO">
         <el-form :model="login" label-width="auto" style="max-width: 600px">
           <el-form-item>
@@ -50,7 +50,7 @@
                 clearable
                 size="large"
               />
-            </div>
+              </div>
           </el-form-item>
           <el-form-item>
             <div class="el_input_wrapper">
@@ -61,12 +61,12 @@
                 show-password
                 size="large"
               />
-            </div>
+              </div>
           </el-form-item>
         </el-form>
         <div class="el_button_wrapper">
           <el-button class="login_button" type="danger" @click="handleRegister_ex">注册</el-button>
-        </div>
+      </div>
 
         <div class="button-group">
           <el-button @click="handleLogin_ex" type="" link> 登录&nbsp;|</el-button>
@@ -125,7 +125,7 @@ const handleRegister_ex = async () => {
         isRegisterFailed.value = 0;
       }, 1000);
     }
-  } catch (error) {
+    } catch (error) {
     console.error('注册请求出错:', error);
     isRegisterFailed.value = 2;
     setTimeout(() => {
