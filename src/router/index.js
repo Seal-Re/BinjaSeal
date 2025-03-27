@@ -32,6 +32,15 @@ const router = createRouter({
         },
       },
       {
+        path: '/home_doctor',
+        name: 'Home_doctor',
+        component: () => import('@/views/Home/AppIndexDoctor.vue'),
+        meta: {
+          title: '首页',
+          layout: true,
+        },
+      },
+      {
         path: '/evaluate',
         name: 'Evaluate',
         component: () => import('@/views/Evaluate/AppIndex.vue'),
@@ -64,6 +73,15 @@ const router = createRouter({
         component: () => import('@/views/Userinfo/AppIndex.vue'),
         meta: {
           title: '用户信息',
+          layout: true,
+        },
+      },
+      {
+        path: '/doctorpair',
+        name: 'Doctorpair',
+        component: () => import('@/views/DoctorPair/AppIndex.vue'),
+        meta: {
+          title: '医患配对',
           layout: true,
         },
       },

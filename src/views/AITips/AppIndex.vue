@@ -1,47 +1,49 @@
 <template>
-  <div class="ai-tips-page">
-    <div class="page-container">
-      <!-- 标题区域 -->
-      <div class="header-flex">
-        <h2 class="ai-tips-title">AI 建议：</h2>
-      </div>
-      <!-- 主要内容 -->
-      <div class="main-content-container">
-        <el-row class="main-content" :gutter="20">
-          <!-- 建议容器 -->
-          <el-col :span="18">
-            <el-card v-if="aiTips.length > 0" class="tips-box common-box">
-              <template #header>
-                <h3 class="tips-text">AI 给出的建议如下</h3>
-              </template>
-              <div class="tips-content scrollable-content">
-                <vue-markdown v-for="(tip, index) in aiTips" :key="index" :source="tip"></vue-markdown>
-              </div>
-            </el-card>
-            <div v-else v-show="!isLoading">加载中...</div>
-          </el-col>
-          <!-- 侧边栏 -->
-          <el-col :span="6">
-            <el-card class="side-bar common-box">
-              <!-- 侧边栏标题 -->
-              <template #header>
-                <div class="header-list">
-                  <h3>信息</h3>
-                </div>
-              </template>
-              <!-- 答题信息 -->
-              <div class="answer-info">
-                <p>用户: {{ user }}</p>
-                <p v-if="userName">姓名: {{ userName }}</p> <!-- 添加姓名展示 -->
-              </div>
-            </el-card>
-          </el-col>
-        </el-row>
-      </div>
+  <div class="content">
+    <div class="summary-top-space">
+      <div class="ai-tips-page">
+        <div class="page-container">
+          <!-- 标题区域 -->
+          <div class="header-flex">
+            <h2 class="ai-tips-title">AI 建议：</h2>
+          </div>
+          <!-- 主要内容 -->
+          <div class="main-content-container">
+            <el-row class="main-content" :gutter="20">
+              <!-- 建议容器 -->
+              <el-col :span="18">
+                <el-card v-if="aiTips.length > 0" class="tips-box common-box">
+                  <template #header>
+                    <h3 class="tips-text">AI 给出的建议如下</h3>
+                  </template>
+                  <div class="tips-content scrollable-content">
+                    <vue-markdown v-for="(tip, index) in aiTips" :key="index" :source="tip"></vue-markdown>
+                  </div>
+                </el-card>
+                <div v-else v-show="!isLoading">加载中...</div>
+              </el-col>
+              <!-- 侧边栏 -->
+              <el-col :span="6">
+                <el-card class="side-bar common-box">
+                  <!-- 侧边栏标题 -->
+                  <template #header>
+                    <div class="header-list">
+                      <h3>信息</h3>
+                    </div>
+                  </template>
+                  <!-- 答题信息 -->
+                  <div class="answer-info">
+                    <p>用户: {{ user }}</p>
+                    <p v-if="userName">姓名: {{ userName }}</p> <!-- 添加姓名展示 -->
+                  </div>
+                </el-card>
+              </el-col>
+            </el-row>
+          </div>
 
-      <!-- 尾部固定区域 -->
-      <div class="fixed-footer">
-        <div class="footer-text">版权所有 © ???</div>
+          <!-- 尾部固定区域 -->
+
+        </div>
       </div>
     </div>
   </div>
@@ -117,11 +119,12 @@ onMounted(async () => {
 }
 
 .tips-box {
-  height: 100%;
+  height: 90%;
   width: 100%;
   max-width: 100%;
   padding: 20px;
   box-sizing: border-box;
+  margin-top: 20px;
   margin-left: 30px;
 }
 
@@ -131,7 +134,7 @@ onMounted(async () => {
 }
 
 .scrollable-content {
-  max-height: 600px;
+  max-height: 500px;
   overflow-y: auto;
 }
 
@@ -160,20 +163,6 @@ onMounted(async () => {
   height: 60px;
 }
 
-.fixed-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 60px;
-  background-color: #ffffff;
-  z-index: 100;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 14px;
-  color: #ffffff;
-}
 
 .footer-text {
   text-align: center;
@@ -185,4 +174,28 @@ onMounted(async () => {
   align-items: center;
   height:20px;
 }
+
+.content {
+  height: 100%;
+  padding: 20px 20px;
+  background-color: rgb(233, 233, 233);
+}
+
+.summary-top-space {
+  padding-top: 20px;
+  background-color: var(--el-bg-color);
+  box-sizing: border-box;
+  border: 1px;
+  border-radius: 6px;
+  box-shadow: 0 0 12px rgb(0 0 0 / 5%);
+  /* 修改顶部外边距 */
+}
+
+.header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height:20pt;
+}
+
 </style>

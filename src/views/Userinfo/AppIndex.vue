@@ -1,18 +1,22 @@
 <template>
-  <form @submit.prevent="handleSubmit" class="user-info-form">
-    <h2>用户信息收集</h2>
-    <label for="name">姓名:</label>
-    <input type="text" id="name" v-model="userInfo.name">
-    <label for="email">邮箱:</label>
-    <input type="email" id="email" v-model="userInfo.email">
-    <label for="contact">联系方式:</label>
-    <input type="text" id="contact" v-model="userInfo.contact">
-    <label for="age">年龄:</label>
-    <input type="number" id="age" v-model="userInfo.age">
-    <label for="medicalHistory">既往病史:</label>
-    <textarea id="medicalHistory" v-model="userInfo.medicalHistory"></textarea>
-    <button type="submit">保存</button>
-  </form>
+  <div class="content">
+    <div class="summary-top-space">
+      <form @submit.prevent="handleSubmit" class="user-info-form">
+        <h2>用户信息收集</h2>
+        <label for="name">姓名:</label>
+        <input type="text" id="name" v-model="userInfo.name">
+        <label for="email">邮箱:</label>
+        <input type="email" id="email" v-model="userInfo.email">
+        <label for="contact">联系方式:</label>
+        <input type="text" id="contact" v-model="userInfo.contact">
+        <label for="age">年龄:</label>
+        <input type="number" id="age" v-model="userInfo.age">
+        <label for="medicalHistory">既往病史:</label>
+        <textarea id="medicalHistory" v-model="userInfo.medicalHistory"></textarea>
+        <button type="submit">保存</button>
+      </form>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -142,5 +146,21 @@ button {
 
 button:hover {
   background-color: #0056b3;
+}
+
+.content {
+  height: 100%;
+  padding: 20px 20px;
+  background-color: rgb(233, 233, 233);
+}
+
+.summary-top-space {
+  padding-top: 20px;
+  background-color: var(--el-bg-color);
+  box-sizing: border-box;
+  border: 1px;
+  border-radius: 6px;
+  box-shadow: 0 0 12px rgb(0 0 0 / 5%);
+  /* 修改顶部外边距 */
 }
 </style>

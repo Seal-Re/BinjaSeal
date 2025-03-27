@@ -16,7 +16,7 @@
                 clearable
                 size="large"
               />
-                        </div>
+            </div>
           </el-form-item>
           <el-form-item>
             <div class="el_input_wrapper">
@@ -27,19 +27,18 @@
                 show-password
                 size="large"
               />
-                </div>
+            </div>
           </el-form-item>
         </el-form>
         <div class="el_button_wrapper">
           <el-button class="login_button" type="danger" @click="handleLogin">登录</el-button>
-                </div>
+        </div>
 
         <div class="button-group">
           <el-button @click="handleRegister" type="" link> 注册&nbsp;|</el-button>
-
           <el-button type="" link>忘记密码 </el-button>
-                </div>
-              </div>
+        </div>
+      </div>
       <div v-else class="log_IO">
         <el-form :model="login" label-width="auto" style="max-width: 600px">
           <el-form-item>
@@ -50,7 +49,7 @@
                 clearable
                 size="large"
               />
-              </div>
+            </div>
           </el-form-item>
           <el-form-item>
             <div class="el_input_wrapper">
@@ -61,16 +60,25 @@
                 show-password
                 size="large"
               />
-              </div>
+            </div>
+          </el-form-item>
+          <el-form-item>
+            <div class="el_input_wrapper">
+              <el-input
+                v-model="login.invitationCode"
+                placeholder="请输入邀请码（选填）"
+                clearable
+                size="large"
+              />
+            </div>
           </el-form-item>
         </el-form>
         <div class="el_button_wrapper">
           <el-button class="login_button" type="danger" @click="handleRegister_ex">注册</el-button>
-      </div>
+        </div>
 
         <div class="button-group">
           <el-button @click="handleLogin_ex" type="" link> 登录&nbsp;|</el-button>
-
           <el-button type="" link>忘记密码 </el-button>
         </div>
       </div>
@@ -90,6 +98,7 @@ import baseurl from '@/http/base';
 const login = reactive({
   username: "",
   password: "",
+  invitationCode: ""
 });
 
 const userStore = useUserStore();
@@ -108,16 +117,21 @@ const handleRegister_ex = async () => {
   const userData = {
     username: login.username,
     password: login.password,
+    invitationCode: login.invitationCode
   };
 
   try {
-    const response = await axios.post(baseurl+'/register', userData);
+    const response = await axios.post(baseurl + '/register', userData);
     if (response.data.success) {
       isRegisterFailed.value = 1;
       setTimeout(() => {
         isRegisterFailed.value = 0;
       }, 1000);
-      ElMessage.success('注册成功，请登录');
+      let message = '注册成功，请登录';
+      if (login.invitationCode) {
+        message += `，使用的邀请码为：${login.invitationCode}`;
+      }
+      ElMessage.success(message);
       RegisterFlag.value = 0;
     } else {
       isRegisterFailed.value = 2;
@@ -125,7 +139,7 @@ const handleRegister_ex = async () => {
         isRegisterFailed.value = 0;
       }, 1000);
     }
-    } catch (error) {
+  } catch (error) {
     console.error('注册请求出错:', error);
     isRegisterFailed.value = 2;
     setTimeout(() => {
@@ -140,7 +154,7 @@ const handleLogin = async () => {
   };
 
   try {
-    const response = await axios.post(baseurl+"/login", userData);
+    const response = await axios.post(baseurl + "/login", userData);
     if (response.data.success) {
       isLoginFailed.value = 1;
       setTimeout(() => {
@@ -149,12 +163,18 @@ const handleLogin = async () => {
 
       // 假设服务器返回的响应中包含 token 和 userInfo
       const { token, userInfo } = response.data;
+      const userClass = userInfo.class; // 获取用户的 class 属性
 
       // 使用 userStore 的方法设置 token 和 userInfo
       userStore.setToken(token);
       userStore.setUserInfo(userInfo);
 
-      router.push("/home");
+      // 根据 class 属性决定跳转页面
+      if (userClass === 0) {
+        router.push("/home");
+      } else if (userClass === 1) {
+        router.push("/home_doctor");
+      }
     } else {
       isLoginFailed.value = 2;
       setTimeout(() => {

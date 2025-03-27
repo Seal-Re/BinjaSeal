@@ -2,7 +2,7 @@
   <el-container class="layout">
     <el-aside>
       <!-- 直接使用一个响应式变量来控制侧边栏宽度 -->
-      <div class="aside-box" :style="{ width: isCollapse ? '65px' : '300px' }">
+      <div class="aside-box" :style="{ width: isCollapse? '65px' : '300px' }">
         <div class="logo flx-center">
           <img class="logo-img" src="@/assets/icons/logo.svg" alt="logo" />
           <span v-show="!isCollapse" class="logo-text">{{ title }}</span>
@@ -10,36 +10,19 @@
         <el-scrollbar>
           <el-menu :default-active="activeMenu" :router="true" :unique-opened="true" :collapse-transition="false" :collapse="isCollapse">
             <div class="menu-style">
-              <!-- 首页菜单 -->
-              <el-menu-item index="/home">
+              <!-- 动态生成菜单 -->
+              <el-menu-item v-for="item in currentMenuList" :key="item.path" :index="item.path">
                 <template #title>
-                  <img v-if="!isCollapse" class="menu-icon" src="@/assets/icons/home.svg" alt="home icon" />
-                  <i v-else class="el-icon-house"></i>
-                  <span v-if="!isCollapse">首页</span>
-                </template>
-              </el-menu-item>
-              <!-- 评估菜单 -->
-              <el-menu-item index="/evaluate">
-                <template #title>
-                  <img v-if="!isCollapse" class="menu-icon" src="@/assets/icons/evaluate.svg" alt="evaluate icon" />
-                  <i v-else class="el-icon-edit"></i>
-                  <span v-if="!isCollapse">认知评估</span>
-                </template>
-              </el-menu-item>
-              <!-- 训练菜单 -->
-              <el-menu-item index="/train">
-                <template #title>
-                  <img v-if="!isCollapse" class="menu-icon" src="@/assets/icons/train.svg" alt="train icon" />
-                  <i v-else class="el-icon-document"></i>
-                  <span v-if="!isCollapse">认知训练</span>
-                </template>
-              </el-menu-item>
-              <!-- 训练菜单 -->
-              <el-menu-item index="/aiTips">
-                <template #title>
-                  <img v-if="!isCollapse" class="menu-icon" src="@/assets/icons/AITips.svg" alt="AITips icon" />
-                  <i v-else class="el-icon-document"></i>
-                  <span v-if="!isCollapse">AI建议</span>
+                  <img
+                    v-if="!isCollapse"
+                    class="menu-icon"
+                    :src="getIconSrc(item.path)"
+                    alt="icon"
+                  />
+                  <el-icon v-else>
+                    <component :is="getIconComponent(item.path)" />
+                  </el-icon>
+                  <span v-if="!isCollapse">{{ item.name }}</span>
                 </template>
               </el-menu-item>
             </div>
@@ -66,12 +49,27 @@
 <script lang="ts" setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import ToolBarLeft from '@/layout/modules/ToolBarLeft.vue';
 import ToolBarRight from '@/layout/modules/ToolBarRight.vue';
 import { useBreadCrumb } from "@/store/index";
+import { useUserStore } from "@/store/index";
+
+// 定义不同 class 对应的菜单数据
+const menuData = {
+  0: [
+    { path: '/home', name: '首页' },
+    { path: '/evaluate', name: '认知评估' },
+    { path: '/train', name: '认知训练' },
+    { path: '/aiTips', name: 'AI建议' }
+  ],
+  1: [
+    { path: '/home_doctor', name: '首页' },
+    { path: '/doctorpair', name: '医患配对' }
+  ]
+};
 
 const route = useRoute();
 const breadcrumbStore = useBreadCrumb();
+const userStore = useUserStore();
 
 // 直接创建一个响应式变量来控制侧边栏是否折叠
 const isCollapse = ref(false);
@@ -79,33 +77,48 @@ const isCollapse = ref(false);
 const title = '脑卒中认知康复系统';
 const activeMenu = computed(() => route.path);
 
-// 定义菜单数据
-const menuList = [
-  {
-    path: '/home',
-    name: '首页'
-  },
-  {
-    path: '/evaluate',
-    name: '认知评估'
-  },
-  {
-    path: '/train',
-    name: '认知训练'
-  },
-  {
-    path: '/aiTips',
-    name: 'AI建议'
-  },
-  {
-    path: '/userinfo',
-    name: '用户信息'
+// 根据 userStore 中的 class 选择对应的菜单数据
+const currentMenuList = computed(() => {
+  const userClass = userStore.getUserInfoObject()?.class || 0;
+  return menuData[userClass] || [];
+});
+
+const icons = import.meta.glob('@/assets/icons/*.svg', { eager: true });
+
+// 辅助函数：根据路径获取图标路径
+const getIconSrc = (path: string) => {
+  const iconMap: Record<string, string> = {
+    '/home': '/src/assets/icons/home.svg',
+    '/evaluate': '/src/assets/icons/evaluate.svg',
+    '/train': '/src/assets/icons/train.svg',
+    '/aiTips': '/src/assets/icons/AITips.svg',
+    '/home_doctor': '/src/assets/icons/home.svg',
+    '/doctorpair': '/src/assets/icons/pair.svg',
+  };
+
+  // 转换为实际编译后的路径
+  const rawPath = iconMap[path];
+  if (!rawPath) return '';
+
+  // 通过import.meta.glob获取编译后的路径
+  return icons[rawPath]?.default || '';
+};
+// 新增图标组件映射
+const getIconComponent = (path: string) => {
+  const iconMap: Record<string, any> = {
+    '/home': 'House',
+    '/home_doctor': 'House',
+    '/evaluate': 'EditPen',
+    '/train': 'Notebook',
+    '/aiTips': 'MagicStick',
+    '/doctorpair': 'pair',
   }
-];
+  return iconMap[path] || ''
+}
 
 // 初始化菜单数据
 onMounted(() => {
-  breadcrumbStore.getMenuList(menuList);
+  breadcrumbStore.getMenuList(currentMenuList.value);
 });
 
 // 获取当前路径的面包屑列表
@@ -119,7 +132,7 @@ const breadcrumbList = computed(() => {
 
 // 自定义菜单样式
 .menu-style {
-  .el-menu-item {
+ .el-menu-item {
     // 正常状态样式
     background-color: #f4f4f4;
     color: #333;
@@ -140,13 +153,13 @@ const breadcrumbList = computed(() => {
         color: #fff;
       }
 
-      .menu-icon {
+     .menu-icon {
         filter: brightness(0) invert(1); // 让激活状态下图标颜色变白
       }
     }
   }
 
-  .menu-icon {
+ .menu-icon {
     width: 20px;
     height: 20px;
     margin-right: 8px;

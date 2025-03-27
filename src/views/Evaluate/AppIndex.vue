@@ -1,165 +1,164 @@
 <template>
   <!-- 模板代码保持不变 -->
-  <div class="summary-top-space"></div>
-  <div v-if="Flag === 0">
-    <div class="page-container">
-      <!-- 新增用户评估区域 -->
-      <div class="header-flex">
-        <h2 class="patieny-summary-title">认知评估测试：</h2>
-      </div>
-      <!-- 主要内容 -->
-      <div class="main-content-container">
-        <el-row class="main-content" :gutter="20">
-          <!-- 题目容器 -->
-          <el-col :span="18">
-            <el-card v-if="currentPageQuestionList.length > 0" class="question-box">
-              <template #header>
-                <h3 class="question-text">{{ currentQuestion.question }}</h3>
-              </template>
-              <!-- 根据 model 参数判断渲染选择题还是填空题 -->
-              <template v-if="currentQuestion.model === '0'">
-                <el-radio-group v-model="selectedOption" class="custom-radio-group" :disabled="showDetails">
-                  <el-radio
-                    v-for="(option, index) in currentQuestion.options"
-                    :key="index"
-                    :label="option"
-                    class="custom-radio"
-                  >
-                    {{ option }}
-                  </el-radio>
-                </el-radio-group>
-              </template>
-              <template v-else-if="currentQuestion.model === '1'">
-                <el-input v-model="selectedOption" placeholder="请输入答案" :disabled="showDetails"></el-input>
-              </template>
-              <!-- 新增图片选择题 -->
-              <template v-else-if="currentQuestion.model === '2'">
-                <el-radio-group v-model="selectedOption" class="image-radio-group" :disabled="showDetails">
-                  <el-row :gutter="20" class="image-options-container">
-                    <el-col
-                      v-for="(option, index) in currentQuestion.options"
-                      :key="index"
-                      :span="12"
-                      class="image-option-col"
-                    >
-                      <el-radio :label="option" class="image-radio-item">
-                        <div class="image-wrapper">
-                          <img
-                            :src="baseurl+`/images_data/?name=${option}`"
-                            alt="选项图片"
-                            class="option-image"
-                          >
-                        </div>
+  <div class="content">
+    <div class="summary-top-space">
+      <div v-if="Flag === 0">
+        <div class="page-container">
+          <!-- 新增用户评估区域 -->
+          <div class="header-flex">
+            <h2 class="patieny-summary-title">认知评估测试：</h2>
+          </div>
+          <!-- 主要内容 -->
+          <div class="main-content-container">
+            <el-row class="main-content" :gutter="20">
+              <!-- 题目容器 -->
+              <el-col :span="18">
+                <el-card v-if="currentPageQuestionList.length > 0" class="question-box">
+                  <template #header>
+                    <h3 class="question-text">{{ currentQuestion.question }}</h3>
+                  </template>
+                  <!-- 根据 model 参数判断渲染选择题还是填空题 -->
+                  <template v-if="currentQuestion.model === '0'">
+                    <el-radio-group v-model="selectedOption" class="custom-radio-group" :disabled="showDetails">
+                      <el-radio
+                        v-for="(option, index) in currentQuestion.options"
+                        :key="index"
+                        :label="option"
+                        class="custom-radio"
+                      >
+                        {{ option }}
                       </el-radio>
-                    </el-col>
-                  </el-row>
-                </el-radio-group>
-              </template>
-              <!-- 题目详情模式下展示正确答案 -->
-              <template v-if="showDetails">
-                <div class="correct-answer-container">
-                  <p class="correct-answer-text">正确答案: <span class="correct-answer-value">{{ currentQuestion.answer }}</span></p>
-                </div>
-              </template>
-            </el-card>
-            <div v-else v-show="!isLoading">加载中...</div>
-          </el-col>
-          <!-- 侧边栏 -->
-          <el-col :span="6">
-            <el-card v-if="currentPageQuestionList.length > 0" class="side-bar">
-              <!-- 题目列表 -->
-              <template #header>
-                <div class="header-list">
-                  <h3>题目列表</h3>
-                </div>
-              </template>
-              <div class="question-list">
-                <div
-                  v-for="(item, index) in currentPageQuestionList"
-                  :key="index"
-                  class="question-number"
-                  :class="{
-                    'correct-answer': answerResults[currentPageIndex * 12 + index] === true,
-                    'wrong-answer': answerResults[currentPageIndex * 12 + index] === false
-                  }"
-                  @click="changeCurrentQuestion(currentPageIndex * 12 + index)"
-                >
-                  {{ currentPageIndex * 12 + index + 1 }}
-                </div>
-              </div>
-              <!-- 新增翻页按钮 -->
-              <div class="page-navigation">
-                <el-button
-                  type="primary"
-                  @click="prevPage"
-                >
-                  上一页
-                </el-button>
-                <el-button
-                  type="primary"
-                  @click="nextPage"
-                >
-                  下一页
-                </el-button>
-              </div>
-              <!-- 答题信息 -->
-              <div class="answer-info">
-                <p>答题时间：{{ getFormattedTime() }}</p>
-                <p>当前得分：{{ score }}</p>
-              </div>
-            </el-card>
-            <div v-else v-show="!isLoading">加载中...</div>
-            <!-- 按钮容器，移到侧边栏卡片外部 -->
-            <el-row v-if="currentPageQuestionList.length > 0" class="button-container" justify="center">
-              <el-col>
-                <el-button
-                  type="primary"
-                  :disabled="false"
-                  @click="currentIndex === currentPageQuestionList.length - 1 && isLastPage()? submitAnswers() : nextQuestion()"
-                  class="big-button"
-                  v-show="!showDetails"
-                >
-                  {{ currentIndex === currentPageQuestionList.length - 1 && isLastPage()? '提交' : '下一题' }}
-                </el-button>
-                <el-button
-                  type="primary"
-                  class="big-button"
-                  v-show="showDetails"
-                  @click="goBackHome"
-                >
-                  返回首页
-                </el-button>
+                    </el-radio-group>
+                  </template>
+                  <template v-else-if="currentQuestion.model === '1'">
+                    <el-input v-model="selectedOption" placeholder="请输入答案" :disabled="showDetails"></el-input>
+                  </template>
+                  <!-- 新增图片选择题 -->
+                  <template v-else-if="currentQuestion.model === '2'">
+                    <el-radio-group v-model="selectedOption" class="image-radio-group" :disabled="showDetails">
+                      <el-row :gutter="20" class="image-options-container">
+                        <el-col
+                          v-for="(option, index) in currentQuestion.options"
+                          :key="index"
+                          :span="12"
+                          class="image-option-col"
+                        >
+                          <el-radio :label="option" class="image-radio-item">
+                            <div class="image-wrapper">
+                              <img
+                                :src="baseurl+`/images_data/?name=${option}`"
+                                alt="选项图片"
+                                class="option-image"
+                              >
+                            </div>
+                          </el-radio>
+                        </el-col>
+                      </el-row>
+                    </el-radio-group>
+                  </template>
+                  <!-- 题目详情模式下展示正确答案 -->
+                  <template v-if="showDetails">
+                    <div class="correct-answer-container">
+                      <p class="correct-answer-text">正确答案: <span class="correct-answer-value">{{ currentQuestion.answer }}</span></p>
+                    </div>
+                  </template>
+                </el-card>
+                <div v-else v-show="!isLoading">加载中...</div>
+              </el-col>
+              <!-- 侧边栏 -->
+              <el-col :span="6">
+                <el-card v-if="currentPageQuestionList.length > 0" class="side-bar">
+                  <!-- 题目列表 -->
+                  <template #header>
+                    <div class="header-list">
+                      <h3>题目列表</h3>
+                    </div>
+                  </template>
+                  <div class="question-list">
+                    <div
+                      v-for="(item, index) in currentPageQuestionList"
+                      :key="index"
+                      class="question-number"
+                      :class="{
+                        'correct-answer': answerResults[currentPageIndex * 12 + index] === true,
+                        'wrong-answer': answerResults[currentPageIndex * 12 + index] === false
+                      }"
+                      @click="changeCurrentQuestion(currentPageIndex * 12 + index)"
+                    >
+                      {{ currentPageIndex * 12 + index + 1 }}
+                    </div>
+                  </div>
+                  <!-- 新增翻页按钮 -->
+                  <div class="page-navigation">
+                    <el-button
+                      type="primary"
+                      class="button-union"
+                      @click="prevPage"
+                    >
+                      上一页
+                    </el-button>
+                    <el-button
+                      type="primary"
+                      class="button-union"
+                      @click="nextPage"
+                    >
+                      下一页
+                    </el-button>
+                  </div>
+                  <!-- 答题信息 -->
+                  <div class="answer-info">
+                    <p>答题时间：{{ getFormattedTime() }}</p>
+                    <p>当前得分：{{ score }}</p>
+                  </div>
+                </el-card>
+                <div v-else v-show="!isLoading">加载中...</div>
+                <!-- 按钮容器，移到侧边栏卡片外部 -->
+                <el-row v-if="currentPageQuestionList.length > 0" class="button-container" justify="center">
+                  <el-col>
+                    <el-button
+                      type="primary"
+                      :disabled="false"
+                      @click="currentIndex === currentPageQuestionList.length - 1 && isLastPage()? submitAnswers() : nextQuestion()"
+                      class="big-button"
+                      v-show="!showDetails"
+                    >
+                      {{ currentIndex === currentPageQuestionList.length - 1 && isLastPage()? '提交' : '下一题' }}
+                    </el-button>
+                    <el-button
+                      type="primary"
+                      class="big-button"
+                      v-show="showDetails"
+                      @click="goBackHome"
+                    >
+                      返回首页
+                    </el-button>
+                  </el-col>
+                </el-row>
               </el-col>
             </el-row>
-          </el-col>
-        </el-row>
-      </div>
+          </div>
 
-      <!-- 尾部固定区域 -->
-      <div class="fixed-footer"></div>
-    </div>
-  </div>
-  <div v-else>
-    <div class="page-container result-page">
-      <!-- 主要内容区域，显示得分和操作按钮 -->
-      <div class="main-content-container result-main-content">
-        <div class="result-box">
-          <!-- 显示得分 -->
-          <h1 class="score-text">{{ score_view }}分</h1>
-          <!-- 查看题目详情按钮 -->
-          <el-button type="primary" class="result-button" @click="showQuestionDetails">
-            查看题目详情
-          </el-button>
-          <!-- 返回主页按钮 -->
-          <el-button type="primary" class="result-button" @click="goBackHome">
-            返回主页
-          </el-button>
         </div>
       </div>
+      <div v-else>
+        <div class="page-container result-page">
+          <!-- 主要内容区域，显示得分和操作按钮 -->
+          <div class="main-content-container result-main-content">
+            <div class="result-box">
+              <!-- 显示得分 -->
+              <h1 class="score-text">{{ score_view }}分</h1>
+              <!-- 查看题目详情按钮 -->
+              <el-button type="primary" class="result-button" @click="showQuestionDetails">
+                查看题目详情
+              </el-button>
+              <!-- 返回主页按钮 -->
+              <el-button type="primary" class="result-button" @click="goBackHome">
+                返回主页
+              </el-button>
+            </div>
+          </div>
 
-      <!-- 尾部固定区域，显示版权信息 -->
-      <div class="fixed-footer">
-        <div class="footer-text">版权所有 © ???</div>
+        </div>
       </div>
     </div>
   </div>
@@ -507,18 +506,13 @@ html, body {
   margin-top: 20px;
 }
 
-.big-button {
-  font-size: 18px; /* 增大字体大小 */
-  padding: 20px 24px; /* 增大上下内边距以放大高度 */
-  width: 100%; /* 使按钮宽度填满父容器 */
-  height: 60px;
-}
 
 .big-button {
   font-size: 18px; /* 增大字体大小 */
   padding: 20px 24px; /* 增大上下内边距以放大高度 */
   width: 100%; /* 使按钮宽度填满父容器 */
   height: 60px;
+  background-color : #007bff;
 }
 
 .custom-radio-group {
@@ -565,20 +559,6 @@ html, body {
   background-color: red;
   color: white;
 }
-.fixed-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 60px; /* 尾部高度 */
-  background-color: #f9f9f9;
-  z-index: 100;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 14px;
-  color: #888;
-}
 
 .footer-text {
   text-align: center;
@@ -614,7 +594,7 @@ html, body {
 .score-text {
   font-size: 60px;
   font-weight: 700;
-  color: #3498db;
+  color: #007bff;
   margin-bottom: 40px;
 }
 
@@ -631,7 +611,7 @@ html, body {
 }
 
 .result-button:hover {
-  background-color: #2980b9;
+  background-color: #007bff;
 }
 
 /* 图片选择题布局修复 */
@@ -683,7 +663,7 @@ html, body {
 }
 
 .image-radio-item.is-checked .image-wrapper {
-  border-color: #409eff;
+  border-color: #007bff;
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
 }
 
@@ -735,6 +715,10 @@ html, body {
   margin: 0;
 }
 
+.button-union {
+  background-color : #007bff
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .main-content-container {
@@ -746,12 +730,21 @@ html, body {
 }
 
 
-/* 移除顶部白条区域样式 */
+
+.content {
+  height: 100%;
+  padding: 20px 20px;
+  background-color: rgb(233, 233, 233);
+}
+
 .summary-top-space {
-  height: 10px;
-  background-color: transparent;
+  padding-top: 20px;
+  background-color: var(--el-bg-color);
+  box-sizing: border-box;
+  border: 1px;
+  border-radius: 6px;
+  box-shadow: 0 0 12px rgb(0 0 0 / 5%);
   /* 修改顶部外边距 */
-  margin-top: 20px;
 }
 
 </style>
