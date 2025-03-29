@@ -34,7 +34,13 @@
       <div class="selected-patient-info">
         <span>患者</span>
         <el-input class="elinput-name" v-model="selectedPatientName" readonly></el-input>
-        <el-button @click="handlePairing" :disabled="!selectedPatientUsername">配对</el-button>
+        <el-button
+          @click="handlePairing"
+          :disabled="!selectedPatientUsername"
+          :class="{ 'active-button': selectedPatientUsername }"
+        >
+          配对
+        </el-button>
       </div>
     </div>
   </div>
@@ -111,7 +117,7 @@ const handleRowClick = (row: { username: string; name: string; }, event: any, co
 };
 
 const getRowClassName = ({ row, rowIndex }: { row: any; rowIndex: number }) => {
-  return rowIndex === selectedRowIndex.value ? 'highlight-row' : '';
+  return rowIndex === selectedRowIndex.value? 'highlight-row' : '';
 };
 
 const handlePairing = async () => {
@@ -273,6 +279,18 @@ onMounted(() => {
 }
 
 .elinput-name {
-  margin-top:20px;
+  margin-top: 20px;
+}
+
+.active-button {
+  background-color: #409eff;
+  border-color: #409eff;
+  color: white;
+}
+
+.active-button:disabled {
+  background-color: #c0c4cc;
+  border-color: #c0c4cc;
+  cursor: not-allowed;
 }
 </style>
