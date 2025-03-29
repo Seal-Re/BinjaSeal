@@ -1,39 +1,41 @@
 <template>
   <div class="patient-list-wrapper content">
-    <div class="header-flex">
-      <h2 class="patieny-summary-title">患者列表</h2>
-      <el-input v-model="searchQuery" placeholder="通过姓名搜索用户" clearable @input="filterPatients"></el-input>
-    </div>
-    <div class="table-data">
-      <el-table
-        :data="currentPagePatients"
-        stripe
-        class="table-with-shadow"
-        style="text-align: center; width: 100%;"
-        @row-click="handleRowClick"
-        :row-class-name="getRowClassName"
-      >
-        <el-table-column prop="username" label="用户名" align="center" min-width="120px"></el-table-column>
-        <el-table-column prop="name" label="姓名" align="center" min-width="100px"></el-table-column>
-        <el-table-column prop="doctor" label="当前医生" align="center" min-width="120px"></el-table-column>
-      </el-table>
-    </div>
-    <div class="pagination-container">
-      <el-pagination
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-        :current-page="currentPage"
-        :page-sizes="[10]"
-        :page-size="pageSize"
-        layout="prev, pager, next"
-        :total="patientStore.filteredPatients.length"
-      >
-      </el-pagination>
-    </div>
-    <div class="selected-patient-info">
-      <span>患者</span>
-      <el-input v-model="selectedPatientName" readonly></el-input>
-      <el-button @click="handlePairing" :disabled="!selectedPatientUsername">配对</el-button>
+    <div class="summary-top-space">
+      <div class="header-flex">
+        <h2 class="patieny-summary-title">患者列表</h2>
+        <el-input v-model="searchQuery" placeholder="通过姓名搜索用户" clearable @input="filterPatients"></el-input>
+      </div>
+      <div class="table-data">
+        <el-table
+          :data="currentPagePatients"
+          stripe
+          class="table-with-shadow"
+          style="text-align: center; width: 100%;"
+          @row-click="handleRowClick"
+          :row-class-name="getRowClassName"
+        >
+          <el-table-column prop="username" label="用户名" align="center" min-width="120px"></el-table-column>
+          <el-table-column prop="name" label="姓名" align="center" min-width="100px"></el-table-column>
+          <el-table-column prop="doctor" label="当前医生" align="center" min-width="120px"></el-table-column>
+        </el-table>
+      </div>
+      <div class="pagination-container">
+        <el-pagination
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          :current-page="currentPage"
+          :page-sizes="[10]"
+          :page-size="pageSize"
+          layout="prev, pager, next"
+          :total="patientStore.filteredPatients.length"
+        >
+        </el-pagination>
+      </div>
+      <div class="selected-patient-info">
+        <span>患者</span>
+        <el-input class="elinput-name" v-model="selectedPatientName" readonly></el-input>
+        <el-button @click="handlePairing" :disabled="!selectedPatientUsername">配对</el-button>
+      </div>
     </div>
   </div>
 </template>
@@ -73,11 +75,11 @@ const filterPatients = () => {
 const fetchPatients = async () => {
   try {
     const response = await axios.get(baseurl + '/api/doctor_usersinfo');
-    const patientData = response.data.data.map(item => ({
+    const patientData = response.data.data.map((item: { user: { username: any; }; user_info: { name: any; doctor: any; }; }) => ({
       username: item.user.username,
       name: item.user_info.name || '无姓名信息',
       doctor: item.user_info.doctor || null
-    })).filter(patient => patient.username);
+    })).filter((patient: { username: any; }) => patient.username);
     patientStore.setPatients(patientData);
     currentPagePatients.value = getCurrentPagePatients();
   } catch (error) {
@@ -85,7 +87,7 @@ const fetchPatients = async () => {
   }
 };
 
-const handleSizeChange = (newSize) => {
+const handleSizeChange = (newSize: number) => {
   pageSize.value = newSize;
   currentPagePatients.value = getCurrentPagePatients();
   selectedPatientUsername.value = '';
@@ -93,7 +95,7 @@ const handleSizeChange = (newSize) => {
   selectedRowIndex.value = -1;
 };
 
-const handleCurrentChange = (newPage) => {
+const handleCurrentChange = (newPage: number) => {
   currentPage.value = newPage;
   currentPagePatients.value = getCurrentPagePatients();
   selectedPatientUsername.value = '';
@@ -101,14 +103,14 @@ const handleCurrentChange = (newPage) => {
   selectedRowIndex.value = -1;
 };
 
-const handleRowClick = (row, event, column) => {
+const handleRowClick = (row: { username: string; name: string; }, event: any, column: any) => {
   const index = currentPagePatients.value.indexOf(row);
   selectedRowIndex.value = index;
   selectedPatientUsername.value = row.username;
   selectedPatientName.value = row.name;
 };
 
-const getRowClassName = ({ row, rowIndex }) => {
+const getRowClassName = ({ row, rowIndex }: { row: any; rowIndex: number }) => {
   return rowIndex === selectedRowIndex.value ? 'highlight-row' : '';
 };
 
@@ -117,7 +119,7 @@ const handlePairing = async () => {
     const user = userStore.userInfo;
     const userInfoObj = JSON.parse(userStore.userInfo);
     const doctorUsername = userInfoObj.username;
-    const selectedPatient = currentPagePatients.value.find(patient => patient.username === selectedPatientUsername.value);
+    const selectedPatient = currentPagePatients.value.find((patient: { username: string; }) => patient.username === selectedPatientUsername.value);
 
     if (!selectedPatient.doctor) {
       try {
@@ -133,7 +135,7 @@ const handlePairing = async () => {
           ElMessage.error('配对失败: ' + response.data.message);
         }
       } catch (error) {
-        ElMessage.error('配对请求出错: ' + error.message);
+        ElMessage.error('配对请求出错: ' + (error as any).message);
       }
     } else if (selectedPatient.doctor!== doctorUsername) {
       ElMessage.warning('该患者已有其他医生，不配对');
@@ -156,7 +158,7 @@ const handlePairing = async () => {
             ElMessage.error('取消配对失败: ' + response.data.message);
           }
         } catch (error) {
-          ElMessage.error('取消配对请求出错: ' + error.message);
+          ElMessage.error('取消配对请求出错: ' + (error as any).message);
         }
       }).catch(() => {
         ElMessage.info('已取消操作');
@@ -185,6 +187,7 @@ onMounted(() => {
 .patieny-summary-title {
   font-size: 20px;
   font-weight: bold;
+  margin-left: 30px;
 }
 
 .el-input {
@@ -212,6 +215,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   margin-top: 20px;
+  justify-content: center;
 }
 
 .selected-patient-info span {
@@ -243,5 +247,32 @@ onMounted(() => {
       background-color: #409eff !important;
     }
   }
+}
+
+.header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 20pt;
+}
+
+.content {
+  height: 100%;
+  padding: 20px 20px;
+  background-color: rgb(233, 233, 233);
+}
+
+.summary-top-space {
+  padding-top: 20px;
+  background-color: var(--el-bg-color);
+  box-sizing: border-box;
+  border: 1px;
+  border-radius: 6px;
+  box-shadow: 0 0 12px rgb(0 0 0 / 5%);
+  /* 修改顶部外边距 */
+}
+
+.elinput-name {
+  margin-top:20px;
 }
 </style>

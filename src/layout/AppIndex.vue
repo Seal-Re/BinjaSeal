@@ -54,7 +54,7 @@ import { useBreadCrumb } from "@/store/index";
 import { useUserStore } from "@/store/index";
 
 // 定义不同 class 对应的菜单数据
-const menuData = {
+const menuData: Record<0 | 1, { path: string; name: string }[]> = {
   0: [
     { path: '/home', name: '首页' },
     { path: '/evaluate', name: '认知评估' },
@@ -63,7 +63,8 @@ const menuData = {
   ],
   1: [
     { path: '/home_doctor', name: '首页' },
-    { path: '/doctorpair', name: '医患配对' }
+    { path: '/doctor_pair', name: '医患配对' },
+    { path: '/doctor_detail', name: '患者详情'}
   ]
 };
 
@@ -80,7 +81,7 @@ const activeMenu = computed(() => route.path);
 // 根据 userStore 中的 class 选择对应的菜单数据
 const currentMenuList = computed(() => {
   const userClass = userStore.getUserInfoObject()?.class || 0;
-  return menuData[userClass] || [];
+  return menuData[userClass as 0 | 1] || [];
 });
 
 const icons = import.meta.glob('@/assets/icons/*.svg', { eager: true });
@@ -93,7 +94,8 @@ const getIconSrc = (path: string) => {
     '/train': '/src/assets/icons/train.svg',
     '/aiTips': '/src/assets/icons/AITips.svg',
     '/home_doctor': '/src/assets/icons/home.svg',
-    '/doctorpair': '/src/assets/icons/pair.svg',
+    '/doctor_pair': '/src/assets/icons/pair.svg',
+    '/doctor_detail': '/src/assets/icons/detail.svg'
   };
 
   // 转换为实际编译后的路径
@@ -101,7 +103,7 @@ const getIconSrc = (path: string) => {
   if (!rawPath) return '';
 
   // 通过import.meta.glob获取编译后的路径
-  return icons[rawPath]?.default || '';
+  return (icons[rawPath] as { default: string })?.default || '';
 };
 // 新增图标组件映射
 const getIconComponent = (path: string) => {

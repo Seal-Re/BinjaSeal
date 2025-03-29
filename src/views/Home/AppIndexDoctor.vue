@@ -4,37 +4,90 @@
   <div class="content">
     <div class="summary-top-space">
       <div class="header-flex">
-          <h2 class="patieny-summary-title">患者情况概况：</h2>
-          <!-- 新增一个容器包裹日期选择框 -->
-          <div class="date-picker-wrapper">
-            <el-date-picker
-              v-model="selectedDate"
-              type="date"
-              placeholder="选择日期"
-              @change="filterTableData"
-            ></el-date-picker>
-          </div>
+        <h2 class="patieny-summary-title">患者情况概况：</h2>
+        <!-- 新增一个容器包裹日期选择框 -->
+        <div class="date-picker-wrapper">
+          <el-date-picker
+            v-model="selectedDate"
+            type="date"
+            placeholder="选择日期"
+            @change="filterTableData"
+          ></el-date-picker>
         </div>
-      <!-- 折线图和饼状图容器 -->
-      <div class="chart-container">
-        <div ref="lineChartRef" class="line-chart"></div>
-        <div ref="pieChartRef" class="pie-chart"></div>
       </div>
       <!-- 表格部分 -->
       <div class="table-data">
-        <el-table :data="currentPageData" stripe class="table-with-shadow" style="text-align: center; width: 100%;">
-          <el-table-column prop="date" label="时间" align="center" min-width="120px"></el-table-column>
-          <!-- 修改为显示认知功能情况 -->
-          <el-table-column prop="认知功能" label="认知功能情况" align="center" min-width="100px"></el-table-column>
-          <el-table-column prop="失算症训练" label="失算症训练" align="center" min-width="100px"></el-table-column>
-          <el-table-column prop="思维障碍训练" label="思维障碍训练" align="center" min-width="100px"></el-table-column>
-          <el-table-column prop="注意障碍训练" label="注意障碍训练" align="center" min-width="100px"></el-table-column>
-          <el-table-column prop="知觉障碍训练" label="知觉障碍训练" align="center" min-width="100px"></el-table-column>
-          <el-table-column prop="记忆障碍训练" label="记忆障碍训练" align="center" min-width="100px"></el-table-column>
-          <el-table-column prop="totalScore" label="总分" align="center" min-width="80px"></el-table-column>
+        <el-table
+          :data="currentPageData"
+          stripe
+          class="table-with-shadow"
+          style="text-align: center; width: 100%;"
+          @sort-change="handleSortChange"
+        >
+          <el-table-column
+            prop="patient_username"
+            label="患者用户名"
+            align="center"
+            min-width="120px"
+            sortable
+          ></el-table-column>
+          <el-table-column
+            prop="date"
+            label="时间"
+            align="center"
+            min-width="120px"
+            sortable
+          ></el-table-column>
+          <el-table-column
+            prop="认知功能"
+            label="认知功能情况"
+            align="center"
+            min-width="100px"
+          ></el-table-column>
+          <el-table-column
+            prop="失算症训练"
+            label="失算症训练"
+            align="center"
+            min-width="100px"
+            sortable
+          ></el-table-column>
+          <el-table-column
+            prop="思维障碍训练"
+            label="思维障碍训练"
+            align="center"
+            min-width="100px"
+            sortable
+          ></el-table-column>
+          <el-table-column
+            prop="注意障碍训练"
+            label="注意障碍训练"
+            align="center"
+            min-width="100px"
+            sortable
+          ></el-table-column>
+          <el-table-column
+            prop="知觉障碍训练"
+            label="知觉障碍训练"
+            align="center"
+            min-width="100px"
+            sortable
+          ></el-table-column>
+          <el-table-column
+            prop="记忆障碍训练"
+            label="记忆障碍训练"
+            align="center"
+            min-width="100px"
+            sortable
+          ></el-table-column>
+          <el-table-column
+            prop="totalScore"
+            label="总分"
+            align="center"
+            min-width="80px"
+            sortable
+          ></el-table-column>
         </el-table>
       </div>
-
       <!-- 新增分页组件的父容器 -->
       <div class="pagination-container">
         <el-pagination
@@ -42,7 +95,7 @@
           :current-page="currentPage"
           :page-size="pageSize"
           layout="prev, pager, next"
-          :total="filteredTableData.length"
+          :total="sortedFilteredData.length"
         />
       </div>
     </div>
@@ -50,12 +103,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useUserStore } from '@/store/index';
 import router from '@/router/index';
 import axios from 'axios';
 import { format } from 'date-fns';
-import * as echarts from 'echarts';
 import baseurl from '@/http/base';
 
 const userStore = useUserStore();
@@ -71,15 +123,20 @@ watch(user, (newValue) => {
 
 const tableData = ref([]);
 const selectedDate = ref(null);
-const lineChartRef = ref(null);
-const pieChartRef = ref(null);
 
 // 分页相关变量
 const currentPage = ref(1);
-const pageSize = ref(8);//每一页最大放的数据量
+const pageSize = ref(12);
+
+// 排序相关变量
+const sortProp = ref(null);
+const sortOrder = ref(null);
 
 // 定义一个函数将日期格式从 2025/3/1 转换为 2025 - 03 - 01
 const convertDate = (dateStr) => {
+  if (!dateStr) {
+    return '';
+  }
   // 分离日期和时间部分（处理两种格式：有时间和无时间）
   const [datePart] = dateStr.split(' '); // 分割日期和时间部分
   const [year, month, day] = datePart.split(/[/-]/); // 处理不同分隔符
@@ -87,15 +144,31 @@ const convertDate = (dateStr) => {
 };
 
 const filteredTableData = computed(() => {
-  if (!selectedDate.value) {
-    return tableData.value;
-  }
-  const formattedDate = format(selectedDate.value, 'yyyy-MM-dd');
-
+  if (!selectedDate.value) return tableData.value
+  const formattedDate = format(selectedDate.value, 'yyyy-MM-dd')
   return tableData.value.filter(item => {
-    // 统一转换item.date格式
-    const itemDate = convertDate(item.date);
-    return itemDate === formattedDate;
+    return convertDate(item.date) === formattedDate
+  })
+})
+
+const sortedFilteredData = computed(() => {
+  if (!sortProp.value ||!sortOrder.value) {
+    return filteredTableData.value;
+  }
+  return [...filteredTableData.value].sort((a, b) => {
+    const valueA = a[sortProp.value];
+    const valueB = b[sortProp.value];
+    if (sortProp.value === 'date') {
+      const dateA = new Date(convertDate(valueA));
+      const dateB = new Date(convertDate(valueB));
+      return sortOrder.value === 'ascending'? dateA - dateB : dateB - dateA;
+    }
+    if (typeof valueA === 'string' && typeof valueB === 'string') {
+      return sortOrder.value === 'ascending'
+       ? valueA.localeCompare(valueB)
+        : valueB.localeCompare(valueA);
+    }
+    return sortOrder.value === 'ascending'? valueA - valueB : valueB - valueA;
   });
 });
 
@@ -103,7 +176,7 @@ const filteredTableData = computed(() => {
 const currentPageData = computed(() => {
   const startIndex = (currentPage.value - 1) * pageSize.value;
   const endIndex = startIndex + pageSize.value;
-  return filteredTableData.value.slice(startIndex, endIndex);
+  return sortedFilteredData.value.slice(startIndex, endIndex);
 });
 
 const logout = () => {
@@ -113,119 +186,13 @@ const logout = () => {
 };
 
 const filterTableData = () => {
-  // 日期选择改变时，会自动触发 filteredTableData 的计算属性更新
-  drawPieChart();
   currentPage.value = 1; // 切换日期后重置到第一页
 };
 
-const drawLineChart = () => {
-  const dataToUse = tableData.value; // 始终使用全部数据绘制折线图
-  const dateMap = new Map();
-  const moduleScores = {
-    '失算症训练': [],
-    '思维障碍训练': [],
-    '注意障碍训练': [],
-    '知觉障碍训练': [],
-    '记忆障碍训练': [],
-    'totalScore': []
-  };
-
-  dataToUse.forEach(item => {
-    const date = convertDate(item.date);
-    if (!dateMap.has(date)) {
-      dateMap.set(date, {
-        '失算症训练': [],
-        '思维障碍训练': [],
-        '注意障碍训练': [],
-        '知觉障碍训练': [],
-        '记忆障碍训练': [],
-        'totalScore': []
-      });
-    }
-    Object.keys(moduleScores).forEach(module => {
-      dateMap.get(date)[module].push(item[module]);
-    });
-  });
-
-  const dates = Array.from(dateMap.keys()).sort();
-  dates.forEach(date => {
-    Object.keys(moduleScores).forEach(module => {
-      const scores = dateMap.get(date)[module];
-      const average = scores.reduce((sum, score) => sum + score, 0) / scores.length;
-      moduleScores[module].push(average);
-    });
-  });
-
-  // 绘制折线图
-  const lineChart = echarts.init(lineChartRef.value);
-  const selectedDateStr = selectedDate.value? format(selectedDate.value, 'yyyy-MM-dd') : null;
-  const lineOption = {
-    tooltip: {
-      trigger: 'axis'
-    },
-    xAxis: {
-      type: 'category',
-      data: dates
-    },
-    yAxis: {
-      type: 'value'
-    },
-    series: Object.keys(moduleScores).map(module => ({
-      name: module,
-      type: 'line',
-      data: moduleScores[module],
-      markPoint: {
-        data: selectedDateStr && dates.includes(selectedDateStr)? [
-          {
-            coord: [selectedDateStr, moduleScores[module][dates.indexOf(selectedDateStr)]],
-            itemStyle: {
-              color: 'red'
-            }
-          }
-        ] : []
-      }
-    }))
-  };
-  lineChart.setOption(lineOption);
-};
-
-const drawPieChart = () => {
-  const dataToUse = selectedDate.value? filteredTableData.value : tableData.value; // 根据是否选择日期决定使用的数据
-  const moduleTotalScores = {
-    '失算症训练': 0,
-    '思维障碍训练': 0,
-    '注意障碍训练': 0,
-    '知觉障碍训练': 0,
-    '记忆障碍训练': 0,
-    'totalScore': 0
-  };
-
-  dataToUse.forEach(item => {
-    Object.keys(moduleTotalScores).forEach(module => {
-      moduleTotalScores[module] += item[module];
-    });
-  });
-
-  // 绘制饼状图
-  const pieChart = echarts.init(pieChartRef.value);
-  const pieData = Object.keys(moduleTotalScores).filter(module => module!== 'totalScore').map(module => ({
-    value: moduleTotalScores[module],
-    name: module
-  }));
-  const pieOption = {
-    tooltip: {
-      trigger: 'item'
-    },
-    series: [
-      {
-        name: '模块得分占比',
-        type: 'pie',
-        radius: '50%',
-        data: pieData
-      }
-    ]
-  };
-  pieChart.setOption(pieOption);
+const handleSortChange = ({ prop, order }) => {
+  sortProp.value = prop;
+  sortOrder.value = order;
+  currentPage.value = 1; // 排序后重置到第一页
 };
 
 const handleCurrentChange = (page) => {
@@ -238,70 +205,47 @@ onMounted(async () => {
       // 将 userInfo 字符串转换为对象
       const userInfoObj = JSON.parse(user.value);
       const username = userInfoObj.username;
-      const response = await axios.get(baseurl + `/api/deliverScoreData?username=${username}`);
+      // 修改接口地址为 /api/doctor_patient_score
+      const response = await axios.get(
+        baseurl + `/api/doctor_patient_score?username=${username}`
+      );
       const data = response.data.data; // 先获取 "data" 键对应的值
 
-      // 创建对象来按日期和id分组存储数据
-      const recordsMap = new Map();
-
-      // 遍历所有训练类型
-      for (const trainingType in data) {
-        // 遍历每个训练类型的数据项
-        for (const item of data[trainingType]) {
-          const key = `${item.date}-${item.id}`;
-
-          // 如果不存在则初始化记录
-          if (!recordsMap.has(key)) {
-            recordsMap.set(key, {
-              date: item.date,
-              // 移除 id
-              失算症训练: 0,
-              思维障碍训练: 0,
-              注意障碍训练: 0,
-              知觉障碍训练: 0,
-              记忆障碍训练: 0,
-              totalScore: 0,
-              // 添加认知功能
-              认知功能: item['认知功能']
-            });
-          }
-
-          // 获取当前记录
-          const record = recordsMap.get(key);
-
-          // 将当前训练类型的值转换为数字（处理无效值为0）
-          const numericValue = Number(item.value) || 0;
-
-          // 更新对应训练类型的值和总分
-          record[trainingType] = numericValue;
-          record.totalScore += numericValue;
+      const recordsMap = new Map()
+      data.forEach(patientData => {
+        const scoreRecord = patientData.score_record
+        if (scoreRecord.data) {
+          Object.entries(scoreRecord.data).forEach(([trainingType, records]) => {
+            records.forEach(record => {
+              const key = `${record.date}-${patientData.patient_username}`
+              if (!recordsMap.has(key)) {
+                recordsMap.set(key, {
+                  patient_username: patientData.patient_username,
+                  date: record.date,
+                  认知功能: record.认知功能 || '',
+                  失算症训练: 0,
+                  思维障碍训练: 0,
+                  注意障碍训练: 0,
+                  知觉障碍训练: 0,
+                  记忆障碍训练: 0,
+                  totalScore: 0
+                })
+              }
+              const row = recordsMap.get(key)
+              const value = Number(record.value) || 0
+              row[trainingType] = value
+              row.totalScore += value
+            })
+          })
         }
-      }
-
-      // 将Map转换为数组并排序
-      const allRows = Array.from(recordsMap.values()).sort((a, b) => {
-        const dateA = new Date(convertDate(a.date));
-        const dateB = new Date(convertDate(b.date));
-        if (dateA.getTime() === dateB.getTime()) {
-          const timeA = new Date(a.date);
-          const timeB = new Date(b.date);
-          const hourDiff = timeB.getHours() - timeA.getHours();
-          if (hourDiff!== 0) {
-            return hourDiff;
-          }
-          const minuteDiff = timeB.getMinutes() - timeA.getMinutes();
-          if (minuteDiff!== 0) {
-            return minuteDiff;
-          }
-          return timeB.getSeconds() - timeA.getSeconds();
-        }
-        return dateB - dateA || (a['认知功能'] > b['认知功能']? 1 : -1);
       });
 
-      tableData.value = allRows;
+      // 按时间倒序排序
+      const allRows = Array.from(recordsMap.values()).sort((a, b) => {
+        return new Date(convertDate(b.date)) - new Date(convertDate(a.date))
+      })
 
-      drawLineChart(); // 初始加载时绘制折线图
-      drawPieChart(); // 初始加载时绘制饼状图
+      tableData.value = allRows
     } catch (error) {
       console.error('获取数据失败:', error);
     }
@@ -311,7 +255,7 @@ onMounted(async () => {
 });
 
 watch(selectedDate, () => {
-  drawPieChart();
+  filterTableData();
 });
 </script>
 <style scoped>
@@ -413,24 +357,7 @@ watch(selectedDate, () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height:20pt;
-}
-
-/* 新增图表容器样式 */
-.chart-container {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.line-chart {
-  width: 60%;
-  height: 300px;
-}
-
-.pie-chart {
-  width: 35%;
-  height: 300px;
+  height: 20pt;
 }
 
 /* 为日期选择框容器添加右侧外边距 */
@@ -442,6 +369,7 @@ watch(selectedDate, () => {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   min-width: 800px; /* 设置表格最小宽度 */
+  margin-top: 20px;
 }
 
 .patieny-summary-title {
@@ -450,11 +378,15 @@ watch(selectedDate, () => {
   margin-left: 30px;
 }
 
-/* 新增分页组件父容器的样式 */
 .pagination-container {
-  display: flex;
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding: 12px 0;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+  z-index: 1000;
   justify-content: center;
-  margin-top: 20px;
+  display: flex;
 }
 
 .content {
@@ -462,5 +394,4 @@ watch(selectedDate, () => {
   padding: 20px 20px;
   background-color: rgb(233, 233, 233);
 }
-
 </style>

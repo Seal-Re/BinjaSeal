@@ -77,11 +77,20 @@ const router = createRouter({
         },
       },
       {
-        path: '/doctorpair',
+        path: '/doctor_pair',
         name: 'Doctorpair',
         component: () => import('@/views/DoctorPair/AppIndex.vue'),
         meta: {
           title: '医患配对',
+          layout: true,
+        },
+      },
+      {
+        path: '/doctor_detail',
+        name: 'DoctorPatientDetail',
+        component: () => import('@/views/DoctorPatientDetail/AppIndex.vue'),
+        meta: {
+          title: '患者详情',
           layout: true,
         },
       },
