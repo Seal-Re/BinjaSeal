@@ -1,163 +1,107 @@
 <template>
-  <!-- 模板代码保持不变 -->
   <div class="content">
-    <div class="summary-top-space">
-      <div v-if="Flag === 0">
-        <div class="page-container">
-          <!-- 新增用户评估区域 -->
-          <div class="header-flex">
-            <h2 class="patieny-summary-title">认知评估测试：</h2>
-          </div>
-          <!-- 主要内容 -->
-          <div class="main-content-container">
-            <el-row class="main-content" :gutter="20">
-              <!-- 题目容器 -->
-              <el-col :span="18">
-                <el-card v-if="currentPageQuestionList.length > 0" class="question-box">
-                  <template #header>
-                    <h3 class="question-text">{{ currentQuestion.question }}</h3>
-                  </template>
-                  <!-- 根据 model 参数判断渲染选择题还是填空题 -->
-                  <template v-if="currentQuestion.model === '0'">
-                    <el-radio-group v-model="selectedOption" class="custom-radio-group" :disabled="showDetails">
-                      <el-radio
-                        v-for="(option, index) in currentQuestion.options"
-                        :key="index"
-                        :label="option"
-                        class="custom-radio"
-                      >
-                        {{ option }}
-                      </el-radio>
-                    </el-radio-group>
-                  </template>
-                  <template v-else-if="currentQuestion.model === '1'">
-                    <el-input v-model="selectedOption" placeholder="请输入答案" :disabled="showDetails"></el-input>
-                  </template>
-                  <!-- 新增图片选择题 -->
-                  <template v-else-if="currentQuestion.model === '2'">
-                    <el-radio-group v-model="selectedOption" class="image-radio-group" :disabled="showDetails">
-                      <el-row :gutter="20" class="image-options-container">
-                        <el-col
-                          v-for="(option, index) in currentQuestion.options"
-                          :key="index"
-                          :span="12"
-                          class="image-option-col"
-                        >
-                          <el-radio :label="option" class="image-radio-item">
-                            <div class="image-wrapper">
-                              <img
-                                :src="baseurl+`/images_data/?name=${option}`"
-                                alt="选项图片"
-                                class="option-image"
-                              >
-                            </div>
-                          </el-radio>
-                        </el-col>
-                      </el-row>
-                    </el-radio-group>
-                  </template>
-                  <!-- 题目详情模式下展示正确答案 -->
-                  <template v-if="showDetails">
-                    <div class="correct-answer-container">
-                      <p class="correct-answer-text">正确答案: <span class="correct-answer-value">{{ currentQuestion.answer }}</span></p>
-                    </div>
-                  </template>
-                </el-card>
-                <div v-else v-show="!isLoading">加载中...</div>
-              </el-col>
-              <!-- 侧边栏 -->
-              <el-col :span="6">
-                <el-card v-if="currentPageQuestionList.length > 0" class="side-bar">
-                  <!-- 题目列表 -->
-                  <template #header>
-                    <div class="header-list">
-                      <h3>题目列表</h3>
-                    </div>
-                  </template>
-                  <div class="question-list">
-                    <div
-                      v-for="(item, index) in currentPageQuestionList"
-                      :key="index"
-                      class="question-number"
-                      :class="{
-                        'correct-answer': answerResults[currentPageIndex * 12 + index] === true,
-                        'wrong-answer': answerResults[currentPageIndex * 12 + index] === false
-                      }"
-                      @click="changeCurrentQuestion(currentPageIndex * 12 + index)"
-                    >
-                      {{ currentPageIndex * 12 + index + 1 }}
-                    </div>
-                  </div>
-                  <!-- 新增翻页按钮 -->
-                  <div class="page-navigation">
-                    <el-button
-                      type="primary"
-                      class="button-union"
-                      @click="prevPage"
-                    >
-                      上一页
-                    </el-button>
-                    <el-button
-                      type="primary"
-                      class="button-union"
-                      @click="nextPage"
-                    >
-                      下一页
-                    </el-button>
-                  </div>
-                  <!-- 答题信息 -->
-                  <div class="answer-info">
-                    <p>答题时间：{{ getFormattedTime() }}</p>
-                    <p>当前得分：{{ score }}</p>
-                  </div>
-                </el-card>
-                <div v-else v-show="!isLoading">加载中...</div>
-                <!-- 按钮容器，移到侧边栏卡片外部 -->
-                <el-row v-if="currentPageQuestionList.length > 0" class="button-container" justify="center">
-                  <el-col>
-                    <el-button
-                      type="primary"
-                      :disabled="false"
-                      @click="currentIndex === currentPageQuestionList.length - 1 && isLastPage()? submitAnswers() : nextQuestion()"
-                      class="big-button"
-                      v-show="!showDetails"
-                    >
-                      {{ currentIndex === currentPageQuestionList.length - 1 && isLastPage()? '提交' : '下一题' }}
-                    </el-button>
-                    <el-button
-                      type="primary"
-                      class="big-button"
-                      v-show="showDetails"
-                      @click="goBackHome"
-                    >
-                      返回首页
-                    </el-button>
-                  </el-col>
-                </el-row>
-              </el-col>
-            </el-row>
-          </div>
-
-        </div>
+    <!-- 按钮选择部分 -->
+    <div v-if="showButtonGroup">
+      <div class="button-group-container">
+        <el-button type="primary" @click="fetchQuestions('MMSE')">MMSE</el-button>
+        <el-button type="primary" @click="fetchQuestions('MoCA')">MoCA</el-button>
+        <el-button type="primary" @click="fetchQuestions('BABRI')">BABRI</el-button>
       </div>
-      <div v-else>
-        <div class="page-container result-page">
-          <!-- 主要内容区域，显示得分和操作按钮 -->
-          <div class="main-content-container result-main-content">
-            <div class="result-box">
-              <!-- 显示得分 -->
-              <h1 class="score-text">{{ score_view }}分</h1>
-              <!-- 查看题目详情按钮 -->
-              <el-button type="primary" class="result-button" @click="showQuestionDetails">
-                查看题目详情
-              </el-button>
-              <!-- 返回主页按钮 -->
-              <el-button type="primary" class="result-button" @click="goBackHome">
-                返回主页
-              </el-button>
+    </div>
+    <!-- 答题部分 -->
+    <div v-else>
+      <div class="summary-top-space">
+        <!-- 答题中页面 -->
+        <div v-if="Flag === 0">
+          <div class="page-container">
+            <div class="header-flex">
+              <h2 class="patieny-summary-title">认知评估测试：</h2>
+            </div>
+            <div class="main-content-container">
+              <el-row class="main-content" :gutter="20">
+                <!-- 题目展示区域 -->
+                <el-col :span="18">
+                  <el-card v-if="currentPageQuestionList.length > 0" class="question-box">
+                    <template #header>
+                      <h3 class="question-text">
+                        {{ currentQuestion.题目类别 }}
+                      </h3>
+                      <h3 class="question-text">
+                        {{ currentQuestion.题目 }}
+                      </h3>
+                    </template>
+                    <div class="operation-guide">
+                      <p>操作指南：{{ currentQuestion.操作指南 }}</p>
+                    </div>
+                    <div class="score-input-container">
+                      <el-input v-model="currentScoreInput" placeholder="请输入分数" />
+                    </div>
+                  </el-card>
+                  <div v-else v-show="!isLoading">加载中...</div>
+                </el-col>
+                <!-- 侧边栏区域 -->
+                <el-col :span="6">
+                  <el-card v-if="currentPageQuestionList.length > 0" class="side-bar">
+                    <template #header>
+                      <div class="header-list">
+                        <h3>题目列表</h3>
+                      </div>
+                    </template>
+                    <div class="question-list">
+                      <div
+                        v-for="(item, index) in currentPageQuestionList"
+                        :key="index"
+                        class="question-number"
+                        :class="{ 'has-score': hasScore(currentPageIndex * 12 + index) }"
+                        @click="changeCurrentQuestion(currentPageIndex * 12 + index)"
+                      >
+                        {{ currentPageIndex * 12 + index + 1 }}
+                      </div>
+                    </div>
+                    <div class="page-navigation">
+                      <el-button type="primary" class="button-union" @click="prevPage">上一页</el-button>
+                      <el-button type="primary" class="button-union" @click="nextPage">下一页</el-button>
+                    </div>
+                    <div class="answer-info">
+                      <p>答题时间：{{ getFormattedTime() }}</p>
+                      <p>当前得分：{{ score }}</p>
+                    </div>
+                  </el-card>
+                  <div v-else v-show="!isLoading">加载中...</div>
+                  <el-row v-if="currentPageQuestionList.length > 0" class="button-container" justify="center">
+                    <el-col>
+                      <el-button
+                        type="primary"
+                        :disabled="false"
+                        @click="currentIndex === currentPageQuestionList.length - 1 && isLastPage()? submitAnswers() : nextQuestion()"
+                        class="big-button"
+                      >
+                        {{ currentIndex === currentPageQuestionList.length - 1 && isLastPage()? '提交' : '下一题' }}
+                      </el-button>
+                    </el-col>
+                  </el-row>
+                </el-col>
+              </el-row>
             </div>
           </div>
-
+        </div>
+        <!-- 结果展示页面 -->
+        <div v-else-if="Flag === 1">
+          <div class="page-container result-page">
+            <div class="main-content-container result-main-content">
+              <div class="result-box">
+                <div class="score-chart-container">
+                  <div class="score-section">
+                    <h1 class="score-text">{{ score_view }}分</h1>
+                  </div>
+                  <div class="chart-section">
+                    <div id="chart-container"></div>
+                  </div>
+                </div>
+                <el-button type="primary" class="result-button" @click="goBackHome">返回主页</el-button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -165,15 +109,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, nextTick } from 'vue';
 import axios from 'axios';
 import { useUserStore, useQuestionStore } from '@/store/index';
 import router from '@/router/index';
 import baseurl from '@/http/base';
+import * as echarts from 'echarts';
 
 const userStore = useUserStore();
-const questionStore = useQuestionStore(); // 使用 useQuestionStore
-// 登录用户
+const questionStore = useQuestionStore();
+// 登录用户信息
 const user = computed(() => {
   try {
     const userInfoObj = JSON.parse(userStore.userInfo);
@@ -183,11 +128,11 @@ const user = computed(() => {
   }
 });
 // 题目列表
-const questionList = ref(questionStore.questionList); // 从 store 中获取题目列表
+const questionList = ref([]);
 // 当前题目索引
-const currentIndex = ref(questionStore.currentIndex); // 从 store 中获取当前题目索引
+const currentIndex = ref(0);
 // 当前页码索引
-const currentPageIndex = ref(questionStore.currentPageIndex); // 从 store 中获取当前页码索引
+const currentPageIndex = ref(0);
 // 当前页的题目列表
 const currentPageQuestionList = computed(() => {
   const startIndex = currentPageIndex.value * 12;
@@ -195,41 +140,45 @@ const currentPageQuestionList = computed(() => {
   return questionList.value.slice(startIndex, endIndex);
 });
 // 当前题目
-const currentQuestion = computed(() => currentPageQuestionList.value[currentIndex.value]);
-// 选择的选项或输入的答案
-const selectedOption = ref('');
+const currentQuestion = computed(() => {
+  return currentPageQuestionList.value[currentIndex.value] || {};
+});
+// 输入的分数
+const currentScoreInput = ref('');
 // 答题开始时间
 const startTime = ref(new Date());
 // 得分
 const score = ref(0);
 const score_view = ref(0);
 // 记录每道题的作答情况
-const answerRecords = ref(questionStore.answerRecords); // 从 store 中获取作答记录
-// 记录每道题的作答结果（正确或错误）
-const answerResults = ref(questionStore.answerResults); // 从 store 中获取作答结果
+const answerRecords = ref([]);
 // 加载状态
 const isLoading = ref(true);
-
+// 控制是否显示按钮组
+const showButtonGroup = ref(true);
+// Flag 用于控制页面显示答题中还是结果页
 const Flag = ref(0);
-const showDetails = ref(false); // 新增：控制是否显示题目详情
-
-// 查看题目详情方法，实现具体逻辑
-const showQuestionDetails = () => {
-  showDetails.value = true;
-  // 重置当前题目索引为第一题
-  currentIndex.value = 0;
-  currentPageIndex.value = 0;
-  Flag.value = 0;
-  // 设置选项为用户已提交的选项
-  selectedOption.value = answerRecords.value[currentPageIndex.value * 12 + currentIndex.value] || '';
-};
+// 每种类型题目的总分
+const categoryTotalScores = ref({});
+// 每种类型题目的得分
+const categoryScores = ref({});
+// 题目所属的表
+const currentTable = ref('');
 
 // 返回主页方法
 const goBackHome = () => {
   router.push('/home');
-  showDetails.value = false;
-  // 重置 store 中的数据
   questionStore.resetState();
+  showButtonGroup.value = true;
+  questionList.value = [];
+  currentIndex.value = 0;
+  currentPageIndex.value = 0;
+  score.value = 0;
+  score_view.value = 0;
+  answerRecords.value = [];
+  categoryTotalScores.value = {};
+  categoryScores.value = {};
+  Flag.value = 0;
 };
 
 // 获取格式化后的答题时间
@@ -247,102 +196,99 @@ const isLastPage = () => {
   return currentPageIndex.value === totalPages - 1;
 };
 
-// 下一题
+// 下一题方法
 const nextQuestion = () => {
+  console.log('进入 nextQuestion 方法');
+  console.log('当前 currentIndex:', currentIndex.value);
+  console.log('当前 currentPageQuestionList.length:', currentPageQuestionList.value.length);
   if (currentPageQuestionList.value.length > 0) {
-    // 记录当前题目的作答情况
-    answerRecords.value[currentPageIndex.value * 12 + currentIndex.value] = selectedOption.value;
-    // 判断答案并计算得分
-    const currentAnswer = currentQuestion.value.answer;
-    const currentScore = parseInt(currentQuestion.value.score, 10); // 将 score 转换为数字
-    const isCorrect = selectedOption.value === currentAnswer;
-    if (isCorrect) {
-      score.value += currentScore;
+    const scoreValue = parseInt(currentScoreInput.value, 10);
+    if (!isNaN(scoreValue) && scoreValue > 0) {
+      score.value += scoreValue;
+      answerRecords.value.push({
+        category: currentQuestion.value.题目类别,
+        question: currentQuestion.value.题目,
+        operationGuide: currentQuestion.value.操作指南,
+        score: scoreValue
+      });
+      // 更新每种类型题目的得分
+      if (!categoryScores.value[currentQuestion.value.题目类别]) {
+        categoryScores.value[currentQuestion.value.题目类别] = 0;
+      }
+      categoryScores.value[currentQuestion.value.题目类别] += scoreValue;
     }
-    // 记录作答结果
-    answerResults.value[currentPageIndex.value * 12 + currentIndex.value] = isCorrect;
+    // 更新每种类型题目的总分
+    if (!categoryTotalScores.value[currentQuestion.value.题目类别]) {
+      categoryTotalScores.value[currentQuestion.value.题目类别] = 0;
+    }
+    categoryTotalScores.value[currentQuestion.value.题目类别] += parseInt(currentQuestion.value.总分 || 1, 10);
 
     if (currentIndex.value < currentPageQuestionList.value.length - 1) {
       currentIndex.value++;
+      console.log('currentIndex 自增后的值:', currentIndex.value);
     } else {
       if (!isLastPage()) {
-        // 不是最后一页，切换到下一页
         currentPageIndex.value++;
         currentIndex.value = 0;
+        console.log('切换到下一页，currentPageIndex:', currentPageIndex.value, 'currentIndex:', currentIndex.value);
       }
     }
-
-    // 恢复当前题目的作答记录
-    selectedOption.value = answerRecords.value[currentPageIndex.value * 12 + currentIndex.value] || '';
-
-    // 更新 store 中的数据
+    currentScoreInput.value = '';
     questionStore.setAnswerRecords(answerRecords.value);
-    questionStore.setAnswerResults(answerResults.value);
     questionStore.setCurrentIndex(currentIndex.value);
     questionStore.setCurrentPageIndex(currentPageIndex.value);
   }
 };
 
+// 提交答案方法
 const submitAnswers = async () => {
-  if (currentPageQuestionList.value.length > 0 && currentIndex.value === currentPageQuestionList.value.length - 1 && isLastPage()) {
-    // 记录最后一题的作答情况
-    answerRecords.value[currentPageIndex.value * 12 + currentIndex.value] = selectedOption.value;
-    // 判断最后一题答案并计算得分
-    const currentAnswer = currentQuestion.value.answer;
-    const currentScore = parseInt(currentQuestion.value.score, 10); // 将 score 转换为数字
-    const isCorrect = selectedOption.value === currentAnswer;
-    if (isCorrect) {
-      score.value += currentScore;
+  console.log('进入 submitAnswers 方法');
+  console.log('当前 currentPageQuestionList 内容:', currentPageQuestionList.value);
+  const pageLength = currentPageQuestionList.value.length;
+  console.log('currentPageQuestionList.length:', pageLength);
+  console.log('currentIndex:', currentIndex.value);
+  console.log('isLastPage:', isLastPage());
+
+  const condition1 = pageLength > 0;
+  const condition2 = currentIndex.value === pageLength - 1;
+  const condition3 = isLastPage();
+
+  console.log('条件1（currentPageQuestionList.length > 0）:', condition1);
+  console.log('条件2（currentIndex.value === currentPageQuestionList.length - 1）:', condition2);
+  console.log('条件3（isLastPage()）:', condition3);
+
+  if (condition1 && condition2 && condition3) {
+    const scoreValue = parseInt(currentScoreInput.value, 10);
+    console.log('输入的分数:', scoreValue);
+    if (!isNaN(scoreValue) && scoreValue > 0) {
+      score.value += scoreValue;
+      answerRecords.value.push({
+        category: currentQuestion.value.题目类别,
+        question: currentQuestion.value.题目,
+        operationGuide: currentQuestion.value.操作指南,
+        score: scoreValue
+      });
+      // 更新每种类型题目的得分
+      if (!categoryScores.value[currentQuestion.value.题目类别]) {
+        categoryScores.value[currentQuestion.value.题目类别] = 0;
+      }
+      categoryScores.value[currentQuestion.value.题目类别] += scoreValue;
     }
-    // 记录最后一题作答结果
-    answerResults.value[currentPageIndex.value * 12 + currentIndex.value] = isCorrect;
+    // 更新每种类型题目的总分
+    if (!categoryTotalScores.value[currentQuestion.value.题目类别]) {
+      categoryTotalScores.value[currentQuestion.value.题目类别] = 0;
+    }
+    categoryTotalScores.value[currentQuestion.value.题目类别] += parseInt(currentQuestion.value.总分 || 1, 10);
 
     try {
-      // 构建训练数据
-      const trainingData = {
-        "失算症训练": { "data": [], "totalScore": 0, "correctScore": 0 },
-        "思维障碍训练": { "data": [], "totalScore": 0, "correctScore": 0 },
-        "注意障碍训练": { "data": [], "totalScore": 0, "correctScore": 0 },
-        "知觉障碍训练": { "data": [], "totalScore": 0, "correctScore": 0 },
-        "记忆障碍训练": { "data": [], "totalScore": 0, "correctScore": 0 }
-      };
-
-      // 填充训练数据并计算每类题目的总得分和正确得分
-      for (let i = 0; i < questionList.value.length; i++) {
-        const question = questionList.value[i];
-        const type = question.class;
-        const value = answerResults.value[i]? question.score : 0;
-        trainingData[type].data.push({
-          id: i + 1,
-          value: value.toString(),
-          date: new Date().toLocaleDateString('zh-CN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-          })
-        });
-        trainingData[type].totalScore += parseInt(question.score, 10);
-        if (answerResults.value[i]) {
-          trainingData[type].correctScore += parseInt(question.score, 10);
-        }
-      }
-
-      // 计算每类题目的得分率
-      const scoreRates = {
-        "失算症训练": trainingData["失算症训练"].totalScore > 0? (trainingData["失算症训练"].correctScore / trainingData["失算症训练"].totalScore) * 100 : 0,
-        "思维障碍训练": trainingData["思维障碍训练"].totalScore > 0? (trainingData["思维障碍训练"].correctScore / trainingData["思维障碍训练"].totalScore) * 100 : 0,
-        "注意障碍训练": trainingData["注意障碍训练"].totalScore > 0? (trainingData["注意障碍训练"].correctScore / trainingData["注意障碍训练"].totalScore) * 100 : 0,
-        "知觉障碍训练": trainingData["知觉障碍训练"].totalScore > 0? (trainingData["知觉障碍训练"].correctScore / trainingData["知觉障碍训练"].totalScore) * 100 : 0,
-        "记忆障碍训练": trainingData["记忆障碍训练"].totalScore > 0? (trainingData["记忆障碍训练"].correctScore / trainingData["记忆障碍训练"].totalScore) * 100 : 0
-      };
-
-      // 构建提交数据
       const submissionData = {
         user: user.value,
+        table: currentTable.value,
+        totalScore: score.value,
+        categoryScores: categoryScores.value,
         data: [
           {
             answerRecords: answerRecords.value,
-            answerResults: answerResults.value,
             score: score.value,
             date: new Date().toLocaleString('zh-CN', {
               year: 'numeric',
@@ -353,88 +299,127 @@ const submitAnswers = async () => {
               second: '2-digit'
             })
           }
-        ],
-        trainingData: trainingData,  // 添加训练数据字段
-        scoreRates: scoreRates  // 添加得分率字段
+        ]
       };
-
-      // 只发送一次请求
       axios.defaults.headers.post['Content-Type'] = 'application/json;charset=UTF-8';
+      console.log('准备发送提交请求，数据:', submissionData);
       const response = await axios.post(baseurl + '/api/submit', submissionData);
       console.log('数据提交成功:', response.data);
-
     } catch (error) {
       console.error('答案提交失败:', error);
     }
     score_view.value = score.value;
     score.value = 0;
     Flag.value = 1;
-    //我在这个地方调用了ai的api，来获取建议
-    axios.get(baseurl + `/api/AI?username=${user.value}`);
-    // 提交答案后重置 store 中的数据
+    console.log('Flag 更新为:', Flag.value);
     questionStore.resetState();
+    // 使用 nextTick 确保页面更新后再绘制图表
+    await nextTick(() => {
+      console.log('进入 nextTick，准备绘制图表');
+      drawChart();
+    });
+  } else {
+    console.log('不满足提交条件');
   }
 };
 
-// 新增：点击题目列表序号改变当前题目
+// 点击题目列表序号改变当前题目
 const changeCurrentQuestion = (index) => {
   currentPageIndex.value = Math.floor(index / 12);
   currentIndex.value = index % 12;
-  selectedOption.value = answerRecords.value[index] || '';
+  console.log('点击题目列表，currentPageIndex:', currentPageIndex.value, 'currentIndex:', currentIndex.value);
 };
 
-// 新增：上一页方法
+// 上一页方法
 const prevPage = () => {
   if (currentPageIndex.value > 0) {
     currentPageIndex.value--;
     currentIndex.value = 0;
-
-    // 更新 store 中的数据
     questionStore.setCurrentPageIndex(currentPageIndex.value);
     questionStore.setCurrentIndex(currentIndex.value);
+    console.log('切换到上一页，currentPageIndex:', currentPageIndex.value, 'currentIndex:', currentIndex.value);
   }
 };
 
-// 新增：下一页方法
+// 下一页方法
 const nextPage = () => {
   if (!isLastPage()) {
     currentPageIndex.value++;
     currentIndex.value = 0;
-
-    // 更新 store 中的数据
     questionStore.setCurrentPageIndex(currentPageIndex.value);
     questionStore.setCurrentIndex(currentIndex.value);
+    console.log('切换到下一页，currentPageIndex:', currentPageIndex.value, 'currentIndex:', currentIndex.value);
   }
 };
 
-onMounted(async () => {
-  // 获取 html 元素
-  const htmlElement = document.documentElement;
-  // 设置 lang 属性
-  htmlElement.lang = 'zh';
-  // 设置样式
-  htmlElement.style.height = '95%';
-
+// 获取题目数据方法
+const fetchQuestions = async (classValue) => {
   try {
-    if (questionList.value.length === 0) { // 如果 store 中没有题目数据，再去请求
-      // 发送请求获取题目数据
-      const response = await axios.get(baseurl + '/api/questions');
-      questionList.value = response.data;
-      questionStore.setQuestionList(questionList.value); // 更新 store 中的题目列表
-
-      // 初始化作答记录和结果数组
-      answerRecords.value = Array(questionList.value.length).fill('');
-      answerResults.value = Array(questionList.value.length).fill(null);
-      questionStore.setAnswerRecords(answerRecords.value);
-      questionStore.setAnswerResults(answerResults.value);
-    }
+    showButtonGroup.value = false;
+    currentTable.value = classValue;
+    const response = await axios.get(`${baseurl}/api/questions?class=${classValue}`);
+    questionList.value = response.data;
+    answerRecords.value = [];
+    categoryTotalScores.value = {};
+    categoryScores.value = {};
+    questionStore.setQuestionList(questionList.value);
     isLoading.value = false;
   } catch (error) {
     console.error('获取题目数据失败:', error);
     isLoading.value = false;
   }
+};
+
+// 判断题目是否已经有分数
+const hasScore = (index) => {
+  const question = currentPageQuestionList.value[index % 12];
+  const questionText = question.题目;
+  return answerRecords.value.some(record => {
+    return record.question === questionText && record.score > 0;
+  });
+};
+
+// 绘制柱状图
+const drawChart = () => {
+  console.log('进入 drawChart 方法');
+  const categories = Object.keys(categoryScores.value);
+  const scores = categories.map(category => categoryScores.value[category]);
+
+  const chartDom = document.getElementById('chart-container');
+  if (chartDom) {
+    console.log('找到图表容器，准备初始化图表');
+    const myChart = echarts.init(chartDom);
+    const option = {
+      xAxis: {
+        type: 'category',
+        data: categories
+      },
+      yAxis: {
+        type: 'value',
+        name: '得分'
+      },
+      series: [
+        {
+          data: scores,
+          type: 'bar'
+        }
+      ]
+    };
+
+    myChart.setOption(option);
+    console.log('图表绘制完成');
+  } else {
+    console.error('未找到图表容器 #chart-container');
+  }
+};
+
+onMounted(async () => {
+  const htmlElement = document.documentElement;
+  htmlElement.lang = 'zh';
+  htmlElement.style.height = '95%';
 });
 </script>
+
 <style scoped>
 /* 样式部分保持不变 */
 html, body {
@@ -442,7 +427,6 @@ html, body {
   padding: 0;
   height: 100%;
 }
-
 
 .main-content {
   width: 100%;
@@ -493,6 +477,11 @@ html, body {
   transition: all 0.3s;
 }
 
+.question-number.has-score {
+  background-color: green;
+  color: white;
+}
+
 .question-number:hover {
   background-color: #f0f0f0;
 }
@@ -505,7 +494,6 @@ html, body {
 .button-container {
   margin-top: 20px;
 }
-
 
 .big-button {
   font-size: 18px; /* 增大字体大小 */
@@ -589,6 +577,22 @@ html, body {
   text-align: center;
   box-sizing: border-box;
   margin-right:24%;
+}
+
+.score-chart-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.score-section {
+  flex: 1;
+}
+
+.chart-section {
+  flex: 2;
+  height: 400px;
 }
 
 .score-text {
@@ -727,9 +731,13 @@ html, body {
   .el-col {
     width: 100%;
   }
+  .score-chart-container {
+    flex-direction: column;
+  }
+  .chart-section {
+    width: 100%;
+  }
 }
-
-
 
 .content {
   height: 100%;
@@ -746,5 +754,20 @@ html, body {
   box-shadow: 0 0 12px rgb(0 0 0 / 5%);
   /* 修改顶部外边距 */
 }
-
+.button-group-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 50px;
+}
+.operation-guide {
+  margin-bottom: 10px;
+}
+.score-input-container {
+  margin-top: 10px;
+}
+#chart-container {
+  width: 100%;
+  height: 100%;
+}
 </style>

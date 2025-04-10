@@ -1,5 +1,7 @@
 <template>
   <div class="login-wrapper">
+    <div ref="vantaRef" style="width: 100%; height: 100vh;"></div>
+    <div class="banner"></div>
     <div class="log_in">
       <div class="title">
         <img class="logo_icon" src="@/assets/rzkh.svg" />
@@ -87,13 +89,18 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import router from "@/router/index";
 import axios from "axios";
 import { useUserStore } from "@/store/index";
 import { reactive } from "vue";
 import { ElMessage } from 'element-plus';
 import baseurl from '@/http/base';
+import * as THREE from "three";
+import BIRDS from "vanta/src/vanta.birds";
+
+const vantaRef = ref(null);
+let vantaEffect: { destroy: () => void; } | null = null;
 
 const login = reactive({
   username: "",
@@ -180,6 +187,7 @@ const handleLogin = async () => {
       setTimeout(() => {
         isLoginFailed.value = 0;
       }, 1000);
+      ElMessage.error('用户名或密码错误'); // 新增的错误提示
     }
   } catch (error) {
     console.error("登录请求出错:", error);
@@ -187,6 +195,7 @@ const handleLogin = async () => {
     setTimeout(() => {
       isLoginFailed.value = 0;
     }, 1000);
+    ElMessage.error('用户名或密码错误'); // 新增的错误提示
   }
 };
 
@@ -194,7 +203,26 @@ onMounted(() => {
   document.documentElement.style.height = "100%";
   document.body.style.height = "100%";
   document.body.style.flexDirection = "column";
-  document.body.style.backgroundColor = "#FFFFFFF";
+  document.body.style.backgroundColor = "#FFFFFF";
+
+  vantaEffect = BIRDS({
+    el: vantaRef.value,
+    THREE: THREE,
+    mouseControls: true,
+    touchControls: true,
+    gyroControls: false,
+    minHeight: 200.0,
+    minWidth: 200.0,
+    scale: 1.0,
+    color1: 0x00FFFF, // 这里使用十六进制颜色值
+    color2: 0xFFFF00, // 这里使用十六进制颜色值
+  });
+});
+
+onBeforeUnmount(() => {
+  if (vantaEffect) {
+    vantaEffect.destroy();
+  }
 });
 </script>
 

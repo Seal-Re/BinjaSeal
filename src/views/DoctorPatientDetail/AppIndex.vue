@@ -153,7 +153,7 @@ const handleRowClick = async (row) => {
 const fetchPatientData = async (username) => {
   try {
     const response = await axios.get(
-      baseurl + `/api/deliverScoreData?username=${username}`
+      baseurl + `/api/deliverScoreData_train?username=${username}`
     );
     const rawData = response.data?.data;
 

@@ -238,7 +238,7 @@ onMounted(async () => {
       // 将 userInfo 字符串转换为对象
       const userInfoObj = JSON.parse(user.value);
       const username = userInfoObj.username;
-      const response = await axios.get(baseurl + `/api/deliverScoreData?username=${username}`);
+      const response = await axios.get(baseurl + `/api/deliverScoreData_train?username=${username}`);
       const data = response.data.data; // 先获取 "data" 键对应的值
 
       // 创建对象来按日期和id分组存储数据
