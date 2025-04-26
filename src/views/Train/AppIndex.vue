@@ -380,14 +380,23 @@ const submitAnswers = async () => {
       const response = await axios.post(baseurl + '/api/submit_train', submissionData);
       console.log('数据提交成功:', response.data);
 
+      // 判断是否达到满分
+      const totalScore = trainingData.reduce((acc, item) => acc + item.totalScore, 0);
+      if (score.value >= 190) {
+        try {
+          const aiResponse = await axios.get(baseurl + `/api/aiTrain?username=${user.value}`);
+          console.log('AI训练请求成功:', aiResponse.data);
+        } catch (aiError) {
+          console.error('AI训练请求失败:', aiError);
+        }
+      }
+
     } catch (error) {
       console.error('答案提交失败:', error);
     }
     score_view.value = score.value;
     score.value = 0;
     Flag.value = 1;
-    //我在这个地方调用了ai的api，来获取建议
-    axios.get(baseurl + `/api/AI?username=${user.value}`);
     // 提交答案后重置 store 中的数据
     questionStore.resetState();
   }

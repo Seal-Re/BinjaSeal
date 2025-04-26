@@ -577,6 +577,7 @@ html, body {
   text-align: center;
   box-sizing: border-box;
   margin-right:24%;
+  width: 50%;
 }
 
 .score-chart-container {
@@ -587,7 +588,7 @@ html, body {
 }
 
 .score-section {
-  flex: 1;
+  flex: 2;
 }
 
 .chart-section {

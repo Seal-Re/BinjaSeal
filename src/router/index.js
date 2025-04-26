@@ -94,6 +94,15 @@ const router = createRouter({
           layout: true,
         },
       },
+      {
+        path: '/doctor_evaluate',
+        name: 'DoctorEvaluate',
+        component: () => import('@/views/DoctorEvaluate/AppIndex.vue'),
+        meta: {
+          title: '患者评估情况',
+          layout: true,
+        },
+      }
     ]
   });
 
