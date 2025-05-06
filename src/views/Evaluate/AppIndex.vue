@@ -6,6 +6,7 @@
         <el-button type="primary" @click="fetchQuestions('MMSE')">MMSE</el-button>
         <el-button type="primary" @click="fetchQuestions('MoCA')">MoCA</el-button>
         <el-button type="primary" @click="fetchQuestions('BABRI')">BABRI</el-button>
+        <el-button type="primary" @click="fetchQuestions('Evaluate')">医患评估</el-button>
       </div>
     </div>
     <!-- 答题部分 -->

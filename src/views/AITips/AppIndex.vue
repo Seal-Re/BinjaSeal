@@ -17,10 +17,20 @@
                     <h3 class="tips-text">AI 给出的建议如下</h3>
                   </template>
                   <div class="tips-content scrollable-content">
-                    <vue-markdown v-for="(tip, index) in aiTips" :key="index" :source="tip"></vue-markdown>
+                    <vue-markdown v-if="aiTips.length > 0" :source="aiTips[aiTips.length - 1].ai_tips"></vue-markdown>
                   </div>
                 </el-card>
-                <div v-else v-show="!isLoading">加载中...</div>
+                <!-- 如果没有建议内容，显示提示 -->
+                <el-card v-else-if="!isLoading && !aiTipsFound" class="tips-box common-box">
+                  <template #header>
+                    <h3 class="tips-text">AI 给出的建议如下</h3>
+                  </template>
+                  <div class="tips-content">
+                    暂无建议内容。
+                  </div>
+                </el-card>
+                <!-- 加载中显示 -->
+                <div v-else v-show="isLoading">加载中...</div>
               </el-col>
               <!-- 侧边栏 -->
               <el-col :span="6">
@@ -66,32 +76,44 @@ const user = computed(() => {
     return '未登录用户';
   }
 });
-const aiTips = ref([]);
-const isLoading = ref(true);
-const userName = ref(''); // 用于存储用户姓名
+const aiTips = ref([]);      // 存储 AI 建议
+const isLoading = ref(true); // 控制 loading
+const aiTipsFound = ref(true); // 控制是否找到建议
+const userName = ref('');    // 用户姓名
 
 onMounted(async () => {
   try {
-    // 发送请求获取 AI 建议
+    // 获取 AI 建议
     const response = await axios.get(baseurl + `/api/aiTips?username=${user.value}`);
-    // 筛选出正确的建议
-    if (response.data.length > 0 && response.data[0].data.length > 0) {
-      const suggestion = response.data[0].data[0];
-      aiTips.value = [suggestion.ai_tips];
+    if (response.data.found) {
+      // 如果 found 为 true，表示找到数据
+      aiTips.value = response.data.data;
+      aiTipsFound.value = true; // 标记为找到数据
+    } else {
+      // 如果 found 为 false，表示没有找到数据
+      aiTips.value = [];
+      aiTipsFound.value = false; // 标记为没有找到数据
     }
+  } catch (error) {
+    console.error('获取 AI 建议失败:', error);
+    aiTipsFound.value = false; // 网络错误或其他问题时标记为没有找到数据
+  }
 
-    // 发送请求获取用户信息
+  // 获取用户信息
+  try {
     const userInfoResponse = await axios.get(baseurl + `/api/userinfo_get?user=${user.value}`);
     if (userInfoResponse.data.user_info) {
       userName.value = userInfoResponse.data.user_info.name || '';
     }
-
-    isLoading.value = false;
   } catch (error) {
-    console.error('获取数据失败:', error);
-    isLoading.value = false;
+    console.error('获取用户信息失败:', error);
   }
+
+  // 结束加载
+  isLoading.value = false;
 });
+
+
 </script>
 
 <style scoped>

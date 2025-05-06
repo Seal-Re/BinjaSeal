@@ -102,6 +102,15 @@ const router = createRouter({
           title: '患者评估情况',
           layout: true,
         },
+      },
+      {
+        path: '/doctor_tips',
+        name: 'DoctorTips',
+        component: () => import('@/views/DoctorTips/AppIndex.vue'),
+        meta: {
+          title: '医生建议',
+          layout: true,
+        },
       }
     ]
   });

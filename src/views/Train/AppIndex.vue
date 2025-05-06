@@ -380,6 +380,8 @@ const submitAnswers = async () => {
       const response = await axios.post(baseurl + '/api/submit_train', submissionData);
       console.log('数据提交成功:', response.data);
 
+      axios.get(baseurl + `/api/AI?username=${user.value}`);
+
       // 判断是否达到满分
       const totalScore = trainingData.reduce((acc, item) => acc + item.totalScore, 0);
       if (score.value >= 190) {

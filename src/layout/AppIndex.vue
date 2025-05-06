@@ -65,7 +65,8 @@ const menuData: Record<0 | 1, { path: string; name: string }[]> = {
     { path: '/home_doctor', name: '首页' },
     { path: '/doctor_pair', name: '医患配对' },
     { path: '/doctor_detail', name: '患者详情' },
-    { path: '/doctor_evaluate', name: '评估情况' }
+    { path: '/doctor_evaluate', name: '评估情况' },
+    { path: '/doctor_tips', name: '医生建议' }
   ]
 };
 
@@ -97,7 +98,9 @@ const getIconSrc = (path: string) => {
     '/home_doctor': '/src/assets/icons/home.svg',
     '/doctor_pair': '/src/assets/icons/pair.svg',
     '/doctor_detail': '/src/assets/icons/detail.svg',
-    '/doctor_evaluate': '/src/assets/icons/doctor_evaluate.svg'
+    '/doctor_evaluate': '/src/assets/icons/doctor_evaluate.svg',
+    '/doctor_tips': '/src/assets/icons/doctorTips.svg'
+
   };
 
   // 转换为实际编译后的路径
